@@ -1,0 +1,25 @@
+{
+  "summary": "Retested iteration_2 issues (light theme + responsive) end-to-end via Playwright on public URL. All previously-failing and previously-passing flows now pass. Light theme correctly toggles background from rgb(11,14,20) -> rgb(244,246,249), html class flips 'dark'<->'light', text becomes dark (h1 color rgb(15,23,42)) with proper contrast, and theme persists in localStorage across reload. Mobile hamburger, drawer open/close/navigate, mobile Search History cards with full-width Re-run button inside 390px viewport, desktop table, and recommendation flow all working. No new console errors on theme switch (only pre-existing React Router v7 future-flag warnings).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "(Optional) Silence React Router v6 future-flag warnings by opting into v7_startTransition and v7_relativeSplatPath to keep console clean."
+  ],
+  "critical_code_review_comments": [
+    "MobileDrawer keeps the drawer always mounted (uses translate-x for animation). Automated tests should assert transform/bounding-box rather than is_visible(); consider adding aria-hidden syncing (already partially done) and inert attribute for closed state to avoid accidentally-focusable off-screen nav links.",
+    "Frontend .env still has legacy REACT_APP_BACKEND_URL alongside VITE_BACKEND_URL — remove REACT_APP_* if the app is fully Vite to prevent confusion."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not tested this iteration)", "frontend": "100%"},
+  "test_credentials": "None required (no auth).",
+  "seed_data_creation": "None (mock provider seeds history via recommendation runs).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 3 confirmed the light-theme fix (Tailwind var-based colors + html.light body background rule) works. When checking MobileDrawer open/closed state, do NOT use Playwright is_visible(); instead evaluate bounding-box x (<-100 = closed) or check for '-translate-x-full' class. Test IDs available: theme-toggle, mobile-menu-button, mobile-drawer, mobile-drawer-close, mobile-nav-{dashboard,recommendation,history}-link, search-history-table, history-rerun-<id>, history-rerun-mobile-<id>, spec-input-textarea, spec-submit-button, recommendation-card-*, standard-details-container.",
+  "rca of the issue": "Iteration_2 light-theme bug root cause was a stale Tailwind CSS build: colors like 'bg-base' were compiled to the literal dark hex before tailwind.config.js was switched to CSS-variable-based colors (rgb(var(--c-*) / <alpha-value>)). Fix: restart frontend so Tailwind JIT recompiled with new config; index.css also added an explicit 'html.light body { background-color: rgb(var(--c-base)); }' safety net. Verified: body bg = rgb(244,246,249) in light, rgb(11,14,20) in dark; class attribute flips as expected; localStorage 'bis-theme' persists across reloads."
+}

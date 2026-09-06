@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+html.dark {
+  color-scheme: dark;
+  --c-base: 11 14 20;
+  --c-surface: 18 23 33;
+  --c-surface-2: 26 32 44;
+  --c-hairline: 33 43 58;
+  --grid-line: rgba(255, 255, 255, 0.02);
+  --glow-a: rgba(59, 130, 246, 0.08);
+  --glow-b: rgba(16, 185, 129, 0.06);
+}
+
+html.light {
+  color-scheme: light;
+  --c-base: 244 246 249;
+  --c-surface: 255 255 255;
+  --c-surface-2: 237 241 246;
+  --c-hairline: 222 228 236;
+  --grid-line: rgba(15, 23, 42, 0.035);
+  --glow-a: rgba(59, 130, 246, 0.1);
+  --glow-b: rgba(16, 185, 129, 0.08);
+}
+
+/* Safety net so the page background always tracks the theme even if a
+   utility gets cached with a literal value. */
+html.dark body {
+  background-color: rgb(var(--c-base));
+}
+html.light body {
+  background-color: rgb(var(--c-base));
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-base text-slate-300 font-sans antialiased;
+  background-image:
+    radial-gradient(60rem 60rem at 85% -10%, var(--glow-a), transparent 60%),
+    radial-gradient(50rem 50rem at -10% 110%, var(--glow-b), transparent 55%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: rgb(var(--c-base));
+}
+
+/* In light mode remap the dark-tuned slate text scale to readable dark inks. */
+html.light .text-slate-100 { color: #0f172a; }
+html.light .text-slate-200 { color: #1e293b; }
+html.light .text-slate-300 { color: #334155; }
+html.light .text-slate-400 { color: #475569; }
+html.light .text-slate-500 { color: #64748b; }
+html.light .text-slate-600 { color: #94a3b8; }
+html.light .text-slate-800 { color: #cbd5e1; }
+html.light .border-slate-700 { border-color: #e2e8f0; }
+html.light .bg-slate-800 { background-color: #e2e8f0; }
+html.light .text-blue-200 { color: #1d4ed8; }
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--c-surface-2));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+@layer components {
+  .panel {
+    @apply rounded-xl border border-hairline bg-surface/80 backdrop-blur-md shadow-panel;
+  }
+  html.light .panel {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 40px -18px rgba(15, 23, 42, 0.18);
+  }
+  .grid-noise {
+    background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .field {
+    @apply w-full rounded-lg border border-hairline bg-base/60 px-3 py-2.5 text-sm text-slate-200
+      placeholder:text-slate-500 outline-none transition-colors
+      focus:border-accent/70 focus:ring-1 focus:ring-accent/40;
+  }
+}

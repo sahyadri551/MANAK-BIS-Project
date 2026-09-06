@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 2 UI-only testing on external URL. Mobile hamburger + drawer, desktop sidebar, responsive search history, and regression flows (recommendation, dashboard, details modal) all work correctly at both 390x844 and 1920x800. Theme toggle flips html class, persists in localStorage 'bis-theme', and reload correctly restores. However, the LIGHT THEME is visually broken: page background stays dark while text becomes dark, making content unreadable.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ThemeProvider / index.css",
+        "issue": "Light theme unreadable. On html.light, CSS variables update (--c-base=244 246 249) but computed body background stays rgb(11,14,20) (dark). Since html.light also remaps .text-slate-100/200/300 to dark inks (#0f172a etc.), all headings (h1 'Dashboard'), KPI numbers (21, 18, 4, 10), panel titles ('Coverage by Domain', 'Quick Recommendation', 'Recent Searches'), and search history text render dark-on-dark and are invisible.",
+        "selector": "body / html.light",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Light theme (all screens)",
+        "issues": [
+          "Body background does not switch to light despite --c-base being updated. Likely a stale/cached built CSS bundle OR a body rule overriding bg-base. Confirmed via getComputedStyle: htmlBaseVar='244 246 249', bodyBaseVar='244 246 249', but body.backgroundColor='rgb(11,14,20)'.",
+          "Multiple panels (.panel using bg-surface/80) also visually stay dark in light mode -> same root cause."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix light theme background: investigate why body computed background-color remains rgb(11,14,20) although --c-base updates. Possibilities: (a) built CSS asset is stale on preview URL -> rebuild/redeploy frontend; (b) a body{background:...} rule with higher specificity is overriding bg-base; (c) Tailwind `@apply bg-base` inside base layer may have been compiled with static dark fallback. Also verify .panel/.field surfaces use theme-aware variables.",
+    "After background fix, re-verify contrast for h1/h2, KPI numeric values, panel titles, sidebar links, and Search History rows in light mode."
+  ],
+  "critical_code_review_comments": [
+    "index.css: `:root, html.dark` combined selector coupled with `html.light` overrides is fine specificity-wise, but the observed runtime behaviour indicates the served CSS is out of sync. Consider forcing a `.dark` / `.light` class-only strategy (drop :root) and hard-invalidating the CSS bundle name on deploy.",
+    "html.light .text-slate-100..600 remaps make the light theme fully dependent on the light background actually rendering; if bg fails, contrast collapses. Add an explicit `html.light body { background-color: rgb(var(--c-base)); }` as a safety net."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested)", "frontend": "90% (all functional flows pass; light theme visual broken)"},
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Focus retest on light-theme visual on external URL. Toggle theme, then verify: (1) getComputedStyle(document.body).backgroundColor is a LIGHT rgb (~244,246,249), (2) h1 'Dashboard' is visible, (3) KPI numbers visible, (4) panels have white/near-white bg. Functional tests for hamburger drawer, mobile history re-run visibility (bounding box within viewport width), desktop sidebar, and recommendation regression all passed and likely don't need retest.",
+  "rca_of_the_issue": "Light theme sets html.light with --c-base=244 246 249 on both <html> and <body> (inherited). Tailwind class `bg-base` should compute to rgb(var(--c-base)). Yet body computed backgroundColor stays rgb(11,14,20) matching the dark --c-base literal. Root cause is likely the served/built CSS bundle either (a) hardcodes rgb(11,14,20) for body (stale build predating theme work) or (b) another rule with equal/higher specificity sets background-color on body. Mitigation: rebuild frontend to refresh cached asset OR add explicit `html.light body { background: rgb(var(--c-base)); }` override. Text remap rules for .text-slate-* to dark inks then produce dark-on-dark, hiding all primary text."
+}

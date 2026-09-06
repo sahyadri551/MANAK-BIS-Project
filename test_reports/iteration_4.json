@@ -1,0 +1,19 @@
+{
+  "summary": "Iteration 4 full backend + frontend testing. Backend Neon Postgres reachable (health.database=up). 17/17 pytest tests pass including new Hindi lang tests for GET /standards?lang=hi, GET /standards/{id}?lang=hi (title/scope/requirements/related_standards Devanagari), POST /recommend?lang=hi (title/department/aspect/matched_requirements Hindi while is_number/status/score unchanged and IS 8112:2013 still ranks top). Frontend: LanguageSwitcher [lang-en/lang-hi] switches UI + standard data to Hindi, persists across reload (localStorage bis-lang), brand 'BIS Recommender' stays untranslated. System theme default follows OS prefers-color-scheme on first visit (html.light matched prefers_dark=false); manual toggle overrides and persists across reload. Collapsible sidebar toggles 256px<->76px, persists via localStorage bis-sidebar='1', nav works while collapsed, hidden on mobile. History quick filter chips [history-chip-dept-Textiles] narrow list (6->1 rows) and clear on second click; text filter [history-search-input] present. React Router v7 future-flag warnings NO longer appear in console (0 warnings). Regression: recommend flow, standard-details-container, mobile hamburger + drawer, mobile history-rerun-mobile-* full-width buttons, theme toggle all functional.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Note: The Hindi switcher button text 'हि' correctly stays in Devanagari in both EN and HI modes (by design). Automated 'has-devanagari on page' checks in EN mode will therefore always be true because of the switcher label itself — use per-element assertions (nav labels, page headings) rather than a global body regex.",
+    "History status-filter chips only appear when at least one prior run used a Status filter. Seed data currently has no such run, so [data-testid^=history-chip-status-] is not rendered. Consider seeding at least one recommendation with a status filter for visible coverage."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "100%"},
+  "test_credentials": "None (no auth).",
+  "seed_data_creation": "Created 2 recommendation runs via UI ('43 grade cement for RCC 43 MPa') and 1 with Textiles filter via backend test to populate history and dept chip.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Data-testids in use: language-switcher, lang-en, lang-hi, theme-toggle, sidebar-collapse-toggle, mobile-menu-button, mobile-drawer, mobile-drawer-close, spec-input-textarea, spec-submit-button, recommendation-card-*, standard-details-container, history-search-input, history-chip-status-*, history-chip-dept-*, history-row-*, history-mobile-card-*, history-rerun-*, history-rerun-mobile-*. localStorage keys: bis-lang (en|hi), bis-theme (light|dark), bis-sidebar ('1' collapsed). Sidebar collapsed width=76, expanded=256. Neon DB may have first-query latency ~1-3s — allow waits. Backend base URL from REACT_APP_BACKEND_URL. Recommendation 'reason' field intentionally NOT translated.",
+  "rca of the issue": "N/A — no failures."
+}
