@@ -191,6 +191,7 @@ class MLRecommendationProvider:
                 query
             )
         )
+        print("DEBUG:Query embedding generated.")
 
         # ==================================================
         # 2. FAISS RETRIEVAL
@@ -202,6 +203,7 @@ class MLRecommendationProvider:
                 top_k=self.retrieval_k,
             )
         )
+        print(f"DEBUG: FAISS retrieval completed: {len(retrieved)} results")
 
         if not retrieved:
             return []
@@ -312,7 +314,7 @@ class MLRecommendationProvider:
         standards = list(
             db.scalars(stmt).all()
         )
-
+        print(f"DEBUG: DB lookup completed: {len(standards)} standards")
         # --------------------------------------------------
         # Map database standards by IS number.
         # --------------------------------------------------
@@ -372,6 +374,7 @@ class MLRecommendationProvider:
                 top_k=settings.max_recommendations,
             )
         )
+        print(f"DEBUG: ranking completed: {len(ranked)} results")
 
         # ==================================================
         # 7. CONVERT TO EXISTING API CONTRACT

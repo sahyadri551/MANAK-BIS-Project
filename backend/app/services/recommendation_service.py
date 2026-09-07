@@ -380,15 +380,7 @@ class RecommendationService:
 
         items = []
 
-        for rank, (
-            std,
-            score,
-            matched,
-            reason,
-        ) in enumerate(
-            ranked,
-            start=1,
-        ):
+        for rank, ( std, score, matched, reason,) in enumerate( ranked,start=1,):
 
             related = [
                 to_related(
@@ -396,13 +388,7 @@ class RecommendationService:
                     relationship,
                     lang,
                 )
-                for (
-                    related_standard,
-                    relationship,
-                )
-                in self.repo.related(
-                    std.id
-                )
+                for ( related_standard, relationship,)in self.repo.related(std.id)
             ]
 
             rmap = req_map(

@@ -20,7 +20,7 @@ export function RecommendationCard({ item, index }: { item: RecommendationItem; 
             <span className="font-mono text-sm font-semibold text-accent">{item.is_number}</span>
             <StatusBadge status={item.status} />
           </div>
-          <h3 className="mt-1.5 truncate font-display text-base font-semibold text-slate-100 group-hover:text-white">
+          <h3 className="mt-1.5 truncate font-display text-base font-semibold text-slate-100 group-hover:text-gray-400">
             {item.title}
           </h3>
           <p className="mt-0.5 text-xs text-slate-500">
