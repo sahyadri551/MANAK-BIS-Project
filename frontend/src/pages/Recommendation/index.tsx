@@ -8,8 +8,12 @@ import { FilterPanel } from '../../components/recommendation/FilterPanel'
 import { ResultsList } from '../../components/recommendation/ResultsList'
 import { Loader } from '../../components/common/Loader'
 import { getRecommendations } from '../../services/recommendationApi'
+import { analyzePdf } from '../../services/pdfApi'
 import { useI18n } from '../../i18n'
-import type { RecommendationFilters, RecommendationItem } from '../../types/recommendation'
+import type { RecommendationFilters, SimilarityMapPoint } from '../../types/recommendation'
+import { ComparisonPanel } from '../../components/recommendation/ComparisonPanel'
+import { SimilarityMap } from '../../components/recommendation/SimilarityMap'
+import { SemanticMatchChart } from '../../components/recommendation/SemanticMatchChart'
 
 const NO_FILTERS: RecommendationFilters = { status: null, department: null, aspect: null }
 
@@ -17,23 +21,54 @@ export default function Recommendation() {
   const location = useLocation()
   const { t, lang } = useI18n()
   const [query, setQuery] = useState('')
-  const [fileName, setFileName] = useState<string | null>(null)
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [filters, setFilters] = useState<RecommendationFilters>(NO_FILTERS)
   const [results, setResults] = useState<RecommendationItem[] | null>(null)
   const [requestId, setRequestId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+ const [similarityMap, setSimilarityMap] = useState< SimilarityMapPoint[]>([])
 
   async function run(spec?: string) {
     const q = (spec ?? query).trim()
     if (!q) return
     setLoading(true)
     try {
-      const res = await getRecommendations({ query: q, document_name: fileName, filters })
+      const res = await getRecommendations({ query: q, document_name: pdfFile?.name ?? null, filters })
       setResults(res.recommendations)
+      setSelectedIds(new Set())
+      setSimilarityMap(res.similarity_map ?? [])
       setRequestId(res.request_id)
       toast.success(`${res.recommendations.length} ${t('results.toast')}`)
     } catch {
       toast.error(t('results.error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function runPdfAnalysis() {
+    if (!pdfFile) return
+
+    setLoading(true)
+
+    try {
+      const res = await analyzePdf(
+        pdfFile,
+        filters,
+      )
+
+      setResults(res.recommendations)
+      setSelectedIds(new Set())
+      setSimilarityMap(res.similarity_map ?? [])
+      setRequestId(res.request_id)
+
+      toast.success(
+        `${res.recommendations.length} BIS standards matched`,
+      )
+    } catch (error) {
+      console.error(error)
+      toast.error('PDF analysis failed')
     } finally {
       setLoading(false)
     }
@@ -54,6 +89,27 @@ export default function Recommendation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang])
 
+  function toggleCompare(standardId: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+
+      if (next.has(standardId)) {
+        next.delete(standardId)
+      } else {
+        if (next.size >= 4) {
+          toast.error(
+            'You can compare up to 4 standards.',
+          )
+          return current
+        }
+
+        next.add(standardId)
+      }
+
+      return next
+    })
+  }
+
   return (
     <div data-testid="recommendation-page" className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_1fr]">
       <div className="space-y-5">
@@ -66,33 +122,81 @@ export default function Recommendation() {
             <SlidersHorizontal className="h-4 w-4 text-accent" />
             <h3 className="font-display text-sm font-semibold">{t('attach.title')}</h3>
           </div>
-          <PdfUploadZone fileName={fileName} onFileNameChange={setFileName} />
+          <PdfUploadZone file={pdfFile} onFileChange={setPdfFile} onAnalyze={runPdfAnalysis} analyzing={loading}/>
           <FilterPanel value={filters} onChange={setFilters} />
         </div>
       </div>
 
       <div className="min-w-0">
-        {loading ? (
-          <Loader label={t('form.matching')} />
-        ) : results === null ? (
-          <div className="panel flex h-full min-h-[300px] flex-col items-center justify-center p-8 text-center">
-            <h2 className="font-display text-xl font-semibold text-slate-200">{t('results.ready')}</h2>
-            <p className="mt-2 max-w-md text-sm text-slate-500">{t('results.readyDesc')}</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg font-semibold text-slate-100">
-                {results.length} {t('results.count')}
-              </h2>
-              {requestId && (
-                <span className="font-mono text-[11px] text-slate-600">req {requestId.slice(0, 8)}</span>
-              )}
-            </div>
-            <ResultsList items={results} />
-          </div>
-        )}
+  {loading ? (
+    <Loader label={t('form.matching')} />
+  ) : results === null ? (
+    <div className="panel flex h-full min-h-[300px] flex-col items-center justify-center p-8 text-center">
+      <h2 className="font-display text-xl font-semibold text-slate-200">
+        {t('results.ready')}
+      </h2>
+      <p className="mt-2 max-w-md text-sm text-slate-500">
+        {t('results.readyDesc')}
+      </p>
+    </div>
+  ) : (
+    <div className="space-y-4">
+      <SemanticMatchChart items={results} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-lg font-semibold text-slate-100">
+          {results.length} {t('results.count')}
+        </h2>
+        <div className="flex items-center gap-3">
+          {selectedIds.size >= 2 && (
+            <button
+              type="button"
+              onClick={() => {
+                document
+                  .getElementById('comparison-panel')
+                  ?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  })
+              }}
+              className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20"
+            >
+              Compare Selected ({selectedIds.size})
+            </button>
+          )}
+
+          {requestId && (
+            <span className="font-mono text-[11px] text-slate-600">
+              req {requestId.slice(0, 8)}
+            </span>
+          )}
+        </div>
       </div>
+      <ResultsList
+        items={results}
+        selectedIds={selectedIds}
+        onToggleCompare={toggleCompare}
+      />
+
+      {selectedIds.size >= 2 && (
+        <ComparisonPanel
+          items={results.filter((item) =>
+            selectedIds.has(item.standard_id),
+          )}
+          onRemove={(standardId) => {
+            setSelectedIds((current) => {
+              const next = new Set(current)
+              next.delete(standardId)
+              return next
+            })
+          }}
+          onClear={() => setSelectedIds(new Set())}
+        />
+      )}
+    </div>
+  )}
+  <SimilarityMap points={similarityMap} /> 
+</div>
+      
     </div>
   )
 }

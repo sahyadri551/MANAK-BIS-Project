@@ -2,6 +2,7 @@ import abc
 import re
 import uuid
 from functools import lru_cache
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -14,14 +15,14 @@ from app.schemas.recommendation import (
     RecommendRequest,
     RecommendResponse,
 )
-from app.services.search_service import SearchService
-from app.services.standard_service import to_related
 from app.services.localization import (
     loc_aspect,
     loc_department,
     loc_title,
     req_map,
 )
+from app.services.search_service import SearchService
+from app.services.standard_service import to_related
 
 
 _STOPWORDS = {
@@ -71,7 +72,6 @@ _STOPWORDS = {
 
 
 def tokenize(text: str) -> set[str]:
-
     words = re.findall(
         r"[a-z0-9]+",
         (text or "").lower(),
@@ -84,6 +84,10 @@ def tokenize(text: str) -> set[str]:
         and word not in _STOPWORDS
     }
 
+
+# ============================================================
+# PROVIDER INTERFACE
+# ============================================================
 
 class RecommendationProvider(abc.ABC):
 
@@ -104,6 +108,10 @@ class RecommendationProvider(abc.ABC):
         ...
 
 
+# ============================================================
+# MOCK PROVIDER
+# ============================================================
+
 class MockRecommendationProvider(
     RecommendationProvider
 ):
@@ -117,7 +125,6 @@ class MockRecommendationProvider(
         db,
         candidates,
     ):
-
         terms = tokenize(
             request.query
         )
@@ -162,10 +169,8 @@ class MockRecommendationProvider(
 
             matched_reqs = [
                 requirement
-                for requirement
-                in (
-                    std.requirements
-                    or []
+                for requirement in (
+                    std.requirements or []
                 )
                 if terms
                 & tokenize(requirement)
@@ -175,9 +180,7 @@ class MockRecommendationProvider(
                 3.0 * len(kw_hits)
                 + 2.0 * len(title_hits)
                 + 1.0 * len(ctx_hits)
-                + 1.5 * len(
-                    matched_reqs
-                )
+                + 1.5 * len(matched_reqs)
             )
 
             if raw == 0:
@@ -200,13 +203,10 @@ class MockRecommendationProvider(
                 3,
             )
 
-            reason = (
-                self._reason(
-                    std,
-                    kw_hits
-                    | title_hits,
-                    matched_reqs,
-                )
+            reason = self._reason(
+                std,
+                kw_hits | title_hits,
+                matched_reqs,
             )
 
             scored.append(
@@ -233,11 +233,9 @@ class MockRecommendationProvider(
         hits,
         matched_reqs,
     ):
-
         parts = []
 
         if hits:
-
             parts.append(
                 "matches spec terms: "
                 + ", ".join(
@@ -246,14 +244,12 @@ class MockRecommendationProvider(
             )
 
         if matched_reqs:
-
             parts.append(
                 f"covers {len(matched_reqs)} "
                 "stated requirement(s)"
             )
 
         if std.domain:
-
             parts.append(
                 "relevant to "
                 + std.domain.replace(
@@ -296,13 +292,7 @@ def get_provider():
 
     if provider_name == "ml":
 
-        # Local import avoids a circular import:
-        #
-        # recommendation_service
-        #       ↓
-        # ML provider
-        #
-        # The ML provider does not import this registry.
+        # Local import avoids circular import.
         from app.ml.ml_recommendation_provider import (
             MLRecommendationProvider,
         )
@@ -326,9 +316,8 @@ class RecommendationService:
     def __init__(
         self,
         db: Session,
-        provider: RecommendationProvider,
+        provider: Any,
     ):
-
         self.db = db
 
         self.repo = (
@@ -354,10 +343,8 @@ class RecommendationService:
         # --------------------------------------------------
         # Existing candidate retrieval.
         #
-        # ML provider uses FAISS + PostgreSQL and does not
-        # depend on this 200-row list for semantic retrieval.
-        #
-        # Mock provider continues using this list.
+        # ML provider uses FAISS + PostgreSQL.
+        # Mock provider uses this candidate list.
         # --------------------------------------------------
 
         candidates = self.repo.list(
@@ -367,7 +354,7 @@ class RecommendationService:
         )
 
         # --------------------------------------------------
-        # Run selected recommendation provider.
+        # Run selected provider.
         # --------------------------------------------------
 
         ranked = (
@@ -380,7 +367,19 @@ class RecommendationService:
 
         items = []
 
-        for rank, ( std, score, matched, reason,) in enumerate( ranked,start=1,):
+        for rank, (
+            std,
+            score,
+            matched,
+            reason,
+        ) in enumerate(
+            ranked,
+            start=1,
+        ):
+
+            # --------------------------------------------------
+            # Related standards.
+            # --------------------------------------------------
 
             related = [
                 to_related(
@@ -388,13 +387,27 @@ class RecommendationService:
                     relationship,
                     lang,
                 )
-                for ( related_standard, relationship,)in self.repo.related(std.id)
+                for (
+                    related_standard,
+                    relationship,
+                )
+                in self.repo.related(
+                    std.id
+                )
             ]
+
+            # --------------------------------------------------
+            # Localized requirements.
+            # --------------------------------------------------
 
             rmap = req_map(
                 std,
                 lang,
             )
+
+            # --------------------------------------------------
+            # Build API recommendation item.
+            # --------------------------------------------------
 
             items.append(
                 RecommendationItem(
@@ -428,6 +441,10 @@ class RecommendationService:
                 )
             )
 
+            # --------------------------------------------------
+            # Save recommendation history.
+            # --------------------------------------------------
+
             self.db.add(
                 Recommendation(
                     request_id=request_id,
@@ -442,14 +459,32 @@ class RecommendationService:
 
         self.db.commit()
 
+        # --------------------------------------------------
+        # Save search history.
+        # --------------------------------------------------
+
         self.search_service.record(
             request_id,
             request,
             len(items),
         )
 
+        # --------------------------------------------------
+        # Similarity map generated by ML provider.
+        #
+        # Mock provider does not have a similarity map,
+        # so return an empty list.
+        # --------------------------------------------------
+
+        similarity_map = getattr(
+            self.provider,
+            "last_similarity_map",
+            [],
+        )
+
         return RecommendResponse(
             request_id=request_id,
             query=request.query,
             recommendations=items,
+            similarity_map=similarity_map,
         )

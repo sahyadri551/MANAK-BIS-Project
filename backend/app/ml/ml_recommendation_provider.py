@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import numpy as np
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -94,18 +95,17 @@ class MLRecommendationProvider:
         Ranking
               ↓
         Top recommendations
+              ↓
+        2D semantic similarity map
     """
 
     def __init__(
         self,
         model_name: str = "BAAI/bge-small-en-v1.5",
     ):
-
         base_dir = Path(__file__).resolve().parent
 
-        artifact_dir = (
-            base_dir / "artifacts"
-        )
+        artifact_dir = base_dir / "artifacts"
 
         index_path = (
             artifact_dir / "standards.index"
@@ -159,9 +159,219 @@ class MLRecommendationProvider:
             settings.max_recommendations * 20,
         )
 
+        # --------------------------------------------------
+        # Stores the latest semantic-map coordinates.
+        # --------------------------------------------------
+
+        self.last_similarity_map = []
+
         print(
             "ML recommendation provider ready."
         )
+
+    # ======================================================
+    # BUILD SEMANTIC SIMILARITY MAP
+    # ======================================================
+
+    def build_similarity_map(
+        self,
+        query_embedding: list[float],
+        retrieved_records: list[dict],
+        standards_by_number: dict[str, Standard],
+        top_k: int = 10,
+    ) -> list[dict]:
+        """
+        Create a simple 2D semantic map using PCA.
+
+        The query and the selected BIS standards are represented
+        by their existing BGE embeddings. PCA reduces those
+        embeddings to two dimensions for visualization.
+        """
+
+        selected = []
+
+        seen_numbers = set()
+
+        for record in retrieved_records:
+            is_number = record.get(
+                "is_number"
+            )
+
+            if not is_number:
+                continue
+
+            # Avoid duplicate standards.
+            if is_number in seen_numbers:
+                continue
+
+            standard = standards_by_number.get(
+                is_number
+            )
+
+            if standard is None:
+                continue
+
+            try:
+                position = int(
+                    record["_index_position"]
+                )
+
+                vector = (
+                    self.retrieval_service.index.reconstruct(
+                        position
+                    )
+                )
+
+                selected.append(
+                    {
+                        "standard": standard,
+                        "vector": np.asarray(
+                            vector,
+                            dtype=np.float32,
+                        ),
+                        "score": float(
+                            record.get(
+                                "similarity_score",
+                                0.0,
+                            )
+                        ),
+                    }
+                )
+
+                seen_numbers.add(
+                    is_number
+                )
+
+            except Exception:
+                continue
+
+            if len(selected) >= top_k:
+                break
+
+        if not selected:
+            return []
+
+        # --------------------------------------------------
+        # Query vector.
+        # --------------------------------------------------
+
+        query_vector = np.asarray(
+            query_embedding,
+            dtype=np.float32,
+        )
+
+        # --------------------------------------------------
+        # Combine query + standard vectors.
+        # --------------------------------------------------
+
+        vectors = np.vstack(
+            [
+                query_vector,
+                *[
+                    item["vector"]
+                    for item in selected
+                ],
+            ]
+        )
+
+        # --------------------------------------------------
+        # Center the vectors.
+        # --------------------------------------------------
+
+        centered = (
+            vectors
+            - vectors.mean(
+                axis=0,
+                keepdims=True,
+            )
+        )
+
+        # --------------------------------------------------
+        # PCA using SVD.
+        # --------------------------------------------------
+
+        _, _, vt = np.linalg.svd(
+            centered,
+            full_matrices=False,
+        )
+
+        if vt.shape[0] < 2:
+            return []
+
+        # --------------------------------------------------
+        # Convert to 2D coordinates.
+        # --------------------------------------------------
+
+        coordinates = (
+            centered @ vt[:2].T
+        )
+
+        # --------------------------------------------------
+        # Normalize coordinates to roughly -1 to +1.
+        # --------------------------------------------------
+
+        scale = np.max(
+            np.abs(coordinates)
+        )
+
+        if scale > 0:
+            coordinates = (
+                coordinates / scale
+            )
+
+        # --------------------------------------------------
+        # Query point.
+        # --------------------------------------------------
+
+        points = [
+            {
+                "standard_id": 0,
+                "is_number": "QUERY",
+                "title": "Your Query",
+                "x": float(
+                    coordinates[0][0]
+                ),
+                "y": float(
+                    coordinates[0][1]
+                ),
+                "score": 1.0,
+                "is_query": True,
+            }
+        ]
+
+        # --------------------------------------------------
+        # BIS standard points.
+        # --------------------------------------------------
+
+        for index, item in enumerate(
+            selected,
+            start=1,
+        ):
+            standard = item[
+                "standard"
+            ]
+
+            points.append(
+                {
+                    "standard_id": standard.id,
+                    "is_number": standard.is_number,
+                    "title": standard.title,
+                    "x": float(
+                        coordinates[index][0]
+                    ),
+                    "y": float(
+                        coordinates[index][1]
+                    ),
+                    "score": item["score"],
+                    "is_query": False,
+                }
+            )
+
+        return points
+
+    # ======================================================
+    # RECOMMEND
+    # ======================================================
 
     def recommend(
         self,
@@ -177,6 +387,9 @@ class MLRecommendationProvider:
         ]
     ]:
 
+        # Clear previous map before every request.
+        self.last_similarity_map = []
+
         query = request.query.strip()
 
         if not query:
@@ -191,7 +404,10 @@ class MLRecommendationProvider:
                 query
             )
         )
-        print("DEBUG:Query embedding generated.")
+
+        print(
+            "DEBUG:Query embedding generated."
+        )
 
         # ==================================================
         # 2. FAISS RETRIEVAL
@@ -203,7 +419,11 @@ class MLRecommendationProvider:
                 top_k=self.retrieval_k,
             )
         )
-        print(f"DEBUG: FAISS retrieval completed: {len(retrieved)} results")
+
+        print(
+            f"DEBUG: FAISS retrieval completed: "
+            f"{len(retrieved)} results"
+        )
 
         if not retrieved:
             return []
@@ -212,32 +432,22 @@ class MLRecommendationProvider:
         # 3. DEDUPLICATE BY IS NUMBER
         # ==================================================
 
-        #
-        # Your test showed duplicate records:
-        #
-        # IS 8112:2013
-        # IS 8042:1989
-        #
-        # appearing multiple times.
-        #
-        # For procurement recommendations, the same
-        # standard number should not occupy multiple slots.
-        #
-
         unique_records = {}
         unique_order = []
 
         for record in retrieved:
 
-            is_number = (
-                record.get("is_number")
+            is_number = record.get(
+                "is_number"
             )
 
             if not is_number:
                 continue
 
-            if is_number not in unique_records:
-
+            if (
+                is_number
+                not in unique_records
+            ):
                 unique_records[
                     is_number
                 ] = record
@@ -266,13 +476,6 @@ class MLRecommendationProvider:
         # --------------------------------------------------
         # Status filtering
         # --------------------------------------------------
-        #
-        # For procurement:
-        #
-        # no explicit status → Active only
-        #
-        # explicit status → respect user's filter
-        #
 
         requested_status = (
             request.filters.status
@@ -314,9 +517,14 @@ class MLRecommendationProvider:
         standards = list(
             db.scalars(stmt).all()
         )
-        print(f"DEBUG: DB lookup completed: {len(standards)} standards")
+
+        print(
+            f"DEBUG: DB lookup completed: "
+            f"{len(standards)} standards"
+        )
+
         # --------------------------------------------------
-        # Map database standards by IS number.
+        # Map standards by IS number.
         # --------------------------------------------------
 
         standards_by_number = {
@@ -328,7 +536,27 @@ class MLRecommendationProvider:
             return []
 
         # ==================================================
-        # 5. BUILD RANKING CANDIDATES
+        # 5. BUILD SEMANTIC MAP
+        # ==================================================
+
+        self.last_similarity_map = (
+            self.build_similarity_map(
+                query_embedding=query_embedding,
+                retrieved_records=retrieved,
+                standards_by_number=(
+                    standards_by_number
+                ),
+                top_k=settings.max_recommendations,
+            )
+        )
+
+        print(
+            "DEBUG: semantic similarity map "
+            f"created: {len(self.last_similarity_map)} points"
+        )
+
+        # ==================================================
+        # 6. BUILD RANKING CANDIDATES
         # ==================================================
 
         ranking_candidates = []
@@ -364,7 +592,7 @@ class MLRecommendationProvider:
             )
 
         # ==================================================
-        # 6. RANK
+        # 7. RANK
         # ==================================================
 
         ranked = (
@@ -374,10 +602,14 @@ class MLRecommendationProvider:
                 top_k=settings.max_recommendations,
             )
         )
-        print(f"DEBUG: ranking completed: {len(ranked)} results")
+
+        print(
+            f"DEBUG: ranking completed: "
+            f"{len(ranked)} results"
+        )
 
         # ==================================================
-        # 7. CONVERT TO EXISTING API CONTRACT
+        # 8. CONVERT TO EXISTING API CONTRACT
         # ==================================================
 
         results = []
@@ -403,13 +635,14 @@ class MLRecommendationProvider:
             )
 
             # ----------------------------------------------
-            # Match explicit requirements where possible.
+            # Match explicit requirements.
             # ----------------------------------------------
 
             matched_requirements = []
 
             for requirement in (
-                standard.requirements or []
+                standard.requirements
+                or []
             ):
 
                 if (
@@ -425,7 +658,7 @@ class MLRecommendationProvider:
             )
 
             # ----------------------------------------------
-            # Explainability
+            # Explainability.
             # ----------------------------------------------
 
             reason = (

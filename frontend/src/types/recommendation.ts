@@ -30,4 +30,15 @@ export interface RecommendResponse {
   request_id: string
   query: string
   recommendations: RecommendationItem[]
+  similarity_map: SimilarityMapPoint[]
+}
+
+export interface SimilarityMapPoint {
+  standard_id: number
+  is_number: string
+  title: string
+  x: number
+  y: number
+  score: number
+  is_query: boolean
 }

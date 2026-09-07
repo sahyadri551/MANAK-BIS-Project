@@ -31,11 +31,24 @@ class RecommendationItem(BaseModel):
     aspect: str | None = None
     matched_requirements: list[str] = Field(default_factory=list)
     reason: str = ""
-    evidence: list = Field(default_factory=list)
+    evidence: list = Field(default_factory=list) # type: ignore
     related_standards: list[RelatedStandard] = Field(default_factory=list)
+
+
+class SimilarityMapPoint(BaseModel):
+    standard_id: int
+    is_number: str
+    title: str
+    x: float
+    y: float
+    score: float
+    is_query: bool = False
 
 
 class RecommendResponse(BaseModel):
     request_id: str
     query: str
     recommendations: list[RecommendationItem]
+    similarity_map: list[SimilarityMapPoint] = Field(
+        default_factory=list
+    )
