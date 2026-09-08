@@ -33,7 +33,7 @@ export interface RecommendResponse {
   similarity_map: SimilarityMapPoint[]
 }
 
-export interface SimilarityMapPoint {
+export type SimilarityMapPoint = {
   standard_id: number
   is_number: string
   title: string
@@ -42,3 +42,5 @@ export interface SimilarityMapPoint {
   score: number
   is_query: boolean
 }
+
+

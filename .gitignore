@@ -32,3 +32,4 @@ credentials.json
 *.pem
 *.key
 .credentials
+backend/data/new_portal_catalog_enriched.jsonl

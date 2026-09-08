@@ -11,59 +11,338 @@ class StandardRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def _base_query(self, status=None, department=None, aspect=None, domain=None, search=None):
+    # ============================================================
+    # BASE QUERY
+    # ============================================================
+
+    def _base_query(
+        self,
+        status=None,
+        department=None,
+        aspect=None,
+        domain=None,
+        group=None,
+        sub_group=None,
+        sub_sub_group=None,
+        ministry=None,
+        committee_name=None,
+        search=None,
+    ):
         stmt = select(Standard)
+
+        # --------------------------------------------------------
+        # Existing filters
+        # --------------------------------------------------------
+
         if status:
-            stmt = stmt.where(Standard.status == status)
+            stmt = stmt.where(
+                Standard.status == status
+            )
+
         if department:
-            stmt = stmt.where(Standard.department == department)
+            stmt = stmt.where(
+                Standard.department == department
+            )
+
         if aspect:
-            stmt = stmt.where(Standard.aspect == aspect)
+            stmt = stmt.where(
+                Standard.aspect == aspect
+            )
+
         if domain:
-            stmt = stmt.where(Standard.domain == domain)
+            stmt = stmt.where(
+                Standard.domain == domain
+            )
+
+        # --------------------------------------------------------
+        # New classification filters
+        # --------------------------------------------------------
+
+        if group:
+            stmt = stmt.where(
+                Standard.group == group
+            )
+
+        if sub_group:
+            stmt = stmt.where(
+                Standard.sub_group == sub_group
+            )
+
+        if sub_sub_group:
+            stmt = stmt.where(
+                Standard.sub_sub_group == sub_sub_group
+            )
+
+        # --------------------------------------------------------
+        # Organization filters
+        # --------------------------------------------------------
+
+        if ministry:
+            stmt = stmt.where(
+                Standard.ministry == ministry
+            )
+
+        if committee_name:
+            stmt = stmt.where(
+                Standard.committee_name
+                == committee_name
+            )
+
+        # --------------------------------------------------------
+        # Text search
+        # --------------------------------------------------------
+
         if search:
             like = f"%{search.lower()}%"
+
             stmt = stmt.where(
                 or_(
-                    func.lower(Standard.title).like(like),
-                    func.lower(Standard.is_number).like(like),
+                    func.lower(
+                        Standard.title
+                    ).like(like),
+
+                    func.lower(
+                        Standard.is_number
+                    ).like(like),
+
+                    func.lower(
+                        Standard.short_title
+                    ).like(like),
+
+                    func.lower(
+                        Standard.department
+                    ).like(like),
+
+                    func.lower(
+                        Standard.department_name
+                    ).like(like),
+
+                    func.lower(
+                        Standard.department_alias
+                    ).like(like),
+
+                    func.lower(
+                        Standard.aspect
+                    ).like(like),
+
+                    func.lower(
+                        Standard.domain
+                    ).like(like),
+
+                    func.lower(
+                        Standard.group
+                    ).like(like),
+
+                    func.lower(
+                        Standard.sub_group
+                    ).like(like),
+
+                    func.lower(
+                        Standard.sub_sub_group
+                    ).like(like),
+
+                    func.lower(
+                        Standard.ministry
+                    ).like(like),
+
+                    func.lower(
+                        Standard.committee_name
+                    ).like(like),
+
+                    func.lower(
+                        Standard.degree_of_equivalence
+                    ).like(like),
+
+                    func.lower(
+                        Standard.ics_code
+                    ).like(like),
                 )
             )
+
         return stmt
 
-    def list(self, status=None, department=None, aspect=None, domain=None, search=None, limit=200, offset=0):
-        stmt = self._base_query(status, department, aspect, domain, search)
-        stmt = stmt.order_by(Standard.is_number).limit(limit).offset(offset)
-        return list(self.db.execute(stmt).scalars().all())
+    # ============================================================
+    # LIST
+    # ============================================================
 
-    def get(self, standard_id: int) -> Standard | None:
-        return self.db.get(Standard, standard_id)
+    def list(
+        self,
+        status=None,
+        department=None,
+        aspect=None,
+        domain=None,
+        group=None,
+        sub_group=None,
+        sub_sub_group=None,
+        ministry=None,
+        committee_name=None,
+        search=None,
+        limit=200,
+        offset=0,
+    ):
+        stmt = self._base_query(
+            status=status,
+            department=department,
+            aspect=aspect,
+            domain=domain,
+            group=group,
+            sub_group=sub_group,
+            sub_sub_group=sub_sub_group,
+            ministry=ministry,
+            committee_name=committee_name,
+            search=search,
+        )
 
-    def get_by_is_number(self, is_number: str) -> Standard | None:
-        stmt = select(Standard).where(Standard.is_number == is_number)
-        return self.db.execute(stmt).scalar_one_or_none()
+        stmt = (
+            stmt
+            .order_by(Standard.is_number)
+            .limit(limit)
+            .offset(offset)
+        )
 
-    def create(self, standard: Standard) -> Standard:
+        return list(
+            self.db.execute(stmt)
+            .scalars()
+            .all()
+        )
+
+    # ============================================================
+    # GET BY ID
+    # ============================================================
+
+    def get(
+        self,
+        standard_id: int,
+    ) -> Standard | None:
+        return self.db.get(
+            Standard,
+            standard_id,
+        )
+
+    # ============================================================
+    # GET BY IS NUMBER
+    # ============================================================
+
+    def get_by_is_number(
+        self,
+        is_number: str,
+    ) -> Standard | None:
+
+        stmt = select(Standard).where(
+            Standard.is_number == is_number
+        )
+
+        return self.db.execute(
+            stmt
+        ).scalar_one_or_none()
+
+    # ============================================================
+    # CREATE
+    # ============================================================
+
+    def create(
+        self,
+        standard: Standard,
+    ) -> Standard:
+
         self.db.add(standard)
+
         self.db.commit()
+
         self.db.refresh(standard)
+
         return standard
 
-    def related(self, standard_id: int) -> list[tuple[Standard, str]]:
+    # ============================================================
+    # RELATED STANDARDS
+    # ============================================================
+
+    def related(
+        self,
+        standard_id: int,
+    ) -> list[tuple[Standard, str]]:
+
         stmt = (
-            select(Standard, StandardRelationship.relationship_type)
-            .join(StandardRelationship, StandardRelationship.target_standard_id == Standard.id)
-            .where(StandardRelationship.source_standard_id == standard_id)
+            select(
+                Standard,
+                StandardRelationship.relationship_type,
+            )
+            .join(
+                StandardRelationship,
+                StandardRelationship.target_standard_id
+                == Standard.id,
+            )
+            .where(
+                StandardRelationship.source_standard_id
+                == standard_id
+            )
         )
-        return [(row[0], row[1]) for row in self.db.execute(stmt).all()]
+
+        return [
+            (
+                row[0],
+                row[1],
+            )
+            for row in self.db.execute(
+                stmt
+            ).all()
+        ]
+
+    # ============================================================
+    # COUNT
+    # ============================================================
 
     def count(self) -> int:
-        return self.db.execute(select(func.count(Standard.id))).scalar_one()
+        return self.db.execute(
+            select(
+                func.count(Standard.id)
+            )
+        ).scalar_one()
 
-    def count_grouped(self, column):
-        stmt = select(column, func.count(Standard.id)).group_by(column)
-        return {row[0] or "unknown": row[1] for row in self.db.execute(stmt).all()}
+    # ============================================================
+    # GROUPED COUNT
+    # ============================================================
 
-    def distinct_values(self, column) -> list[str]:
-        stmt = select(column).where(column.isnot(None)).distinct().order_by(column)
-        return [row[0] for row in self.db.execute(stmt).all()]
+    def count_grouped(
+        self,
+        column,
+    ):
+        stmt = (
+            select(
+                column,
+                func.count(Standard.id),
+            )
+            .group_by(column)
+        )
+
+        return {
+            row[0] or "unknown": row[1]
+            for row in self.db.execute(
+                stmt
+            ).all()
+        }
+
+    # ============================================================
+    # DISTINCT VALUES
+    # ============================================================
+
+    def distinct_values(
+        self,
+        column,
+    ) -> list[str]:
+
+        stmt = (
+            select(column)
+            .where(
+                column.isnot(None)
+            )
+            .distinct()
+            .order_by(column)
+        )
+
+        return [
+            row[0]
+            for row in self.db.execute(
+                stmt
+            ).all()
+        ]
