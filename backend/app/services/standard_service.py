@@ -432,6 +432,10 @@ class StandardService:
                 Standard.domain
             ),
 
+            by_aspect=self.repo.count_grouped(
+                Standard.aspect
+            ),
+
             by_department=self.repo.count_grouped(
                 Standard.department
             ),
@@ -451,7 +455,7 @@ class StandardService:
             ),
 
             departments=self.repo.distinct_values(
-                Standard.department
+                Standard.department_name 
             ),
 
             aspects=self.repo.distinct_values(

@@ -28,20 +28,20 @@ export default function Dashboard() {
   if (loading || !stats) return <Loader />
 
   const activeCount = stats.by_status['Active'] ?? 0
-  const domainCount = Object.keys(stats.by_domain).length
+  const aspectCount = Object.keys(stats.by_aspect).length
 
   return (
     <div data-testid="dashboard-page" className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard testId="stat-total" icon={Database} label={t('dash.total')} value={stats.total} hint={t('dash.totalHint')} />
         <StatCard testId="stat-active" icon={Gauge} label={t('dash.active')} value={activeCount} accent="text-emerald-400" hint={t('dash.activeHint')} />
-        <StatCard testId="stat-domains" icon={Layers} label={t('dash.domains')} value={domainCount} accent="text-cyan-400" hint={t('dash.domainsHint')} />
+        <StatCard testId="stat-aspects" icon={Layers} label="Aspects" value={aspectCount} accent="text-cyan-400" hint="Classification aspects in the BIS catalogue" />
         <StatCard testId="stat-searches" icon={Search} label={t('dash.searches')} value={history.length} accent="text-amber-400" hint={t('dash.searchesHint')} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <DomainCoverageChart data={stats.by_domain} />
+          <DomainCoverageChart data={stats.by_aspect} />
           <RecentSearches entries={history} />
         </div>
         <QuickSpec />

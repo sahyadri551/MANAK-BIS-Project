@@ -350,6 +350,8 @@ class StatsOverview(BaseModel):
 
     by_domain: dict[str, int]
 
+    by_aspect: dict[str, int]
+
     by_department: dict[str, int]
 
 

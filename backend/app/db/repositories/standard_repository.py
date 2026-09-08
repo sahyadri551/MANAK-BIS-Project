@@ -41,7 +41,7 @@ class StandardRepository:
 
         if department:
             stmt = stmt.where(
-                Standard.department == department
+                Standard.department_name == department
             )
 
         if aspect:

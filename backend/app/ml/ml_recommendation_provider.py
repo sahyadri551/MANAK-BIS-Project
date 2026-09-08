@@ -499,7 +499,7 @@ class MLRecommendationProvider:
         if request.filters.department:
 
             stmt = stmt.where(
-                Standard.department
+                Standard.department_name
                 == request.filters.department
             )
 
