@@ -20,6 +20,12 @@ export interface RecommendationItem {
   status: StandardStatus
   department: string | null
   aspect: string | null
+  group: string | null
+  published_on: string | null
+  valid_upto: string | null
+  no_of_revision: number
+  amendment_count: number
+  reaffirmation_year: number | null
   matched_requirements: string[]
   reason: string
   evidence: unknown[]

@@ -420,13 +420,19 @@ class RecommendationService:
                     score=score,
                     status=std.status,
                     department=loc_department(
-                        std.department,
+                        std.department_name,
                         lang,
                     ),
                     aspect=loc_aspect(
                         std.aspect,
                         lang,
                     ),
+                    group=std.group,
+                    published_on=std.published_on,
+                    valid_upto=std.valid_upto,
+                    no_of_revision=std.no_of_revision or 0,
+                    amendment_count=std.amendment_count or 0,
+                    reaffirmation_year=std.reaffirmation_year,
                     matched_requirements=[
                         rmap.get(
                             matched_requirement,

@@ -29,6 +29,12 @@ class RecommendationItem(BaseModel):
     status: str
     department: str | None = None
     aspect: str | None = None
+    group: str | None = None
+    published_on: str | None = None
+    valid_upto: str | None = None
+    no_of_revision: int = 0
+    amendment_count: int = 0
+    reaffirmation_year: int | None = None
     matched_requirements: list[str] = Field(default_factory=list)
     reason: str = ""
     evidence: list = Field(default_factory=list) # type: ignore

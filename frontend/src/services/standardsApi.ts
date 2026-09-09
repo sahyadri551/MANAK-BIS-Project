@@ -17,6 +17,27 @@ export async function getStandard(id: number | string): Promise<StandardDetail> 
   return data
 }
 
+export async function downloadStandardPdf(id: number | string): Promise<void> {
+  const response = await api.get(`/standards/${id}/pdf`, {
+    responseType: 'blob',
+  })
+
+  const blob = new Blob([response.data], {
+    type: 'application/pdf',
+  })
+
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = `BIS_Standard_Report_${String(id)}.pdf`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+
+  window.URL.revokeObjectURL(url)
+}
+
 export async function getStats(): Promise<StatsOverview> {
   const { data } = await api.get('/standards/stats/overview')
   return data

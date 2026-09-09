@@ -371,6 +371,47 @@ def main():
                 row.get("aspect")
             )
 
+            # Split the enriched group hierarchy into
+            # group / sub_group / sub_sub_group.
+            # Example:
+            # A / B / C -> A, B, C
+            group_classification = clean_string(
+                row.get("group_classification")
+            )
+
+            hierarchy_parts = [
+                part.strip()
+                for part in (group_classification or "").split("/")
+                if part.strip()
+            ]
+
+            group = (
+                clean_string(row.get("group"))
+                or (
+                    hierarchy_parts[0]
+                    if len(hierarchy_parts) > 0
+                    else None
+                )
+            )
+
+            sub_group = (
+                clean_string(row.get("sub_group"))
+                or (
+                    hierarchy_parts[1]
+                    if len(hierarchy_parts) > 1
+                    else None
+                )
+            )
+
+            sub_sub_group = (
+                clean_string(row.get("sub_sub_group"))
+                or (
+                    hierarchy_parts[2]
+                    if len(hierarchy_parts) > 2
+                    else None
+                )
+            )
+
             year = extract_year(row)
 
             standard = Standard(
@@ -396,18 +437,10 @@ def main():
                     or derive_domain(row)
                 ),
 
-                group_classification=clean_string(
-                    row.get("group_classification")
-                ),
-                group=clean_string(
-                    row.get("group")
-                ),
-                sub_group=clean_string(
-                    row.get("sub_group")
-                ),
-                sub_sub_group=clean_string(
-                    row.get("sub_sub_group")
-                ),
+                group_classification=group_classification,
+                group=group,
+                sub_group=sub_group,
+                sub_sub_group=sub_sub_group,
 
                 # --------------------------------------------------
                 # Publication

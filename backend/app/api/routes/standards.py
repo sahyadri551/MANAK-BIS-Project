@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -10,6 +11,7 @@ from app.schemas.standard import (
     StandardSummary,
     StatsOverview,
 )
+from app.services.pdf_report_service import build_standard_pdf
 from app.services.standard_service import StandardService
 
 router = APIRouter(prefix="/standards", tags=["standards"])
@@ -32,7 +34,14 @@ def list_standards(
     service: StandardService = Depends(get_service),
 ):
     return service.list(
-        lang=lang, status=status, department=department, aspect=aspect, domain=domain, search=search, limit=limit, offset=offset
+        lang=lang,
+        status=status,
+        department=department,
+        aspect=aspect,
+        domain=domain,
+        search=search,
+        limit=limit,
+        offset=offset,
     )
 
 
@@ -46,14 +55,46 @@ def filter_options(service: StandardService = Depends(get_service)):
     return service.filter_options()
 
 
-@router.get("/{standard_id}", response_model=StandardDetail)
-def get_standard(standard_id: int, lang: str = "en", service: StandardService = Depends(get_service)):
+@router.get("/{standard_id}/pdf")
+def download_standard_pdf(
+    standard_id: int,
+    lang: str = "en",
+    service: StandardService = Depends(get_service),
+):
     detail = service.get_detail(standard_id, lang=lang)
+
     if not detail:
         raise HTTPException(status_code=404, detail="Standard not found")
+
+    pdf_bytes, filename = build_standard_pdf(detail)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.get("/{standard_id}", response_model=StandardDetail)
+def get_standard(
+    standard_id: int,
+    lang: str = "en",
+    service: StandardService = Depends(get_service),
+):
+    detail = service.get_detail(standard_id, lang=lang)
+
+    if not detail:
+        raise HTTPException(status_code=404, detail="Standard not found")
+
     return detail
 
 
 @router.post("", response_model=StandardSummary, status_code=201)
-def create_standard(payload: StandardCreate, service: StandardService = Depends(get_service)):
+def create_standard(
+    payload: StandardCreate,
+    service: StandardService = Depends(get_service),
+):
     return service.create(payload)

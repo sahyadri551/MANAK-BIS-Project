@@ -35,8 +35,9 @@ export function RecommendationCard({
       className="panel group block animate-fade-up p-5 transition-colors hover:border-accent/40"
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          {/* Header */}
+          <div className="flex flex-wrap items-center gap-3">
             <input
               type="checkbox"
               checked={selected}
@@ -51,23 +52,32 @@ export function RecommendationCard({
               aria-label={`Compare ${item.is_number}`}
             />
 
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-sm font-semibold text-accent">
-                {item.is_number}
-              </span>
+            <span className="font-mono text-sm font-semibold text-accent">
+              {item.is_number}
+            </span>
 
-              <StatusBadge status={item.status} />
-            </div>
+            <StatusBadge status={item.status} />
           </div>
 
-          <h3 className="mt-1.5 truncate font-display text-base font-semibold text-slate-100 group-hover:text-gray-400">
+          {/* Title */}
+          <h3 className="mt-2 truncate font-display text-base font-semibold text-slate-100 group-hover:text-gray-400">
             {item.title}
           </h3>
 
-          <p className="mt-0.5 text-xs text-slate-500">
-            {item.department}
-            {item.aspect ? ` · ${item.aspect}` : ''}
-          </p>
+          {/* BIS metadata */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {item.department && (
+              <span className="rounded-md border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 font-mono text-[11px] font-medium text-cyan-300">
+                {item.department}
+              </span>
+            )}
+
+            {item.aspect && (
+              <span className="rounded-md border border-violet-400/20 bg-violet-400/10 px-2 py-1 text-[11px] text-violet-300">
+                {item.aspect}
+              </span>
+            )}
+          </div>
         </div>
 
         <ScoreBadge
@@ -76,26 +86,35 @@ export function RecommendationCard({
         />
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-slate-400">
+      {/* Explanation */}
+      <p className="mt-4 text-sm leading-relaxed text-slate-400">
         {item.reason}
       </p>
 
+      {/* Matched requirements */}
       {item.matched_requirements.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {item.matched_requirements.map(
-            (req, i) => (
-              <span
-                key={i}
-                data-testid="requirement-chip"
-                className="rounded-md border border-accent/20 bg-accent/10 px-2 py-0.5 text-[11px] text-blue-200"
-              >
-                {req}
-              </span>
-            ),
-          )}
+        <div className="mt-3">
+          <div className="mb-1.5 text-[10px] font-mono uppercase tracking-widest text-slate-500">
+            Matched requirements
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {item.matched_requirements.map(
+              (req, i) => (
+                <span
+                  key={i}
+                  data-testid="requirement-chip"
+                  className="rounded-md border border-accent/20 bg-accent/10 px-2 py-0.5 text-[11px] text-blue-200"
+                >
+                  {req}
+                </span>
+              ),
+            )}
+          </div>
         </div>
       )}
 
+      {/* Footer */}
       <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <Link2 className="h-3.5 w-3.5" />
