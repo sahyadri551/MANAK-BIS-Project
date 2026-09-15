@@ -1,17 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import {
-  BarChart3,
-  CheckSquare,
-  Database,
-  GitCompare,
-  HelpCircle,
-  History,
-  LayoutDashboard,
-  LayoutGrid,
-  Plus,
-  Search,
-  Settings,
-} from 'lucide-react'
+import { History, LayoutDashboard, Plus, Search} from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
 
@@ -97,10 +85,10 @@ export function NavContent({ collapsed = false }: { collapsed?: boolean }) {
 
       {!collapsed && (
         <div className="mt-3 rounded-xl border border-hairline bg-base/50 p-4">
-          <p className="text-xs font-semibold text-slate-200">Standards</p>
-          <p className="mt-0.5 text-sm font-bold text-accent">Build a Safer, Stronger, Smarter India</p>
+          <p className="text-xs font-semibold text-slate-200">{t('nav.standards')}</p>
+          <p className="mt-0.5 text-sm font-bold text-accent">{t('nav.slogan')}</p>
           <div className="mt-2 h-1 rounded-full bg-gradient-to-r from-accent via-signal to-amber-400" />
-          <p className="mt-3 font-mono text-[10px] text-slate-500">Version 1.0.0</p>
+          <p className="mt-3 font-mono text-[10px] text-slate-500">{t('nav.version')}</p>
         </div>
       )}
     </div>

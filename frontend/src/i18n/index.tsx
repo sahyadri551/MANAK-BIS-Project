@@ -4,6 +4,10 @@ import { setApiLang } from '../services/api'
 export type Lang = 'en' | 'hi' | 'ta' | 'bn'
 
 const en: Record<string, string> = {
+  'nav.standards': 'Standards',
+  'nav.slogan': 'Build a Safer, Stronger, Smarter India',
+  'nav.version': 'Version 1.0.0',
+  'nav.collapse': 'Collapse',
   'brand.tagline': 'Standards Engine',
   'nav.workspace': 'Workspace',
   'nav.dashboard': 'Dashboard',
@@ -118,9 +122,19 @@ const en: Record<string, string> = {
   'notfound.desc': 'The page you are looking for is not part of the standards workspace.',
   'notfound.dashboard': 'Dashboard',
   'notfound.recommend': 'Recommend',
+  'dash.aspects': 'Aspects',
+  'dash.aspectsHint': 'Classification aspects in the BIS catalogue',
+  'dash.coverageAspect': 'Coverage by Aspect',
 }
 
 const hi: Record<string, string> = {
+  'topbar.searchPlaceholder': 'IS नंबर, शीर्षक या कीवर्ड से मानक खोजें…',
+  'nav.newRec': 'नई अनुशंसा',
+  'nav.searchStd': 'मानक खोजें',
+  'nav.standards': 'मानक',
+  'nav.slogan': 'सुरक्षित, सशक्त और बेहतर भारत का निर्माण',
+  'nav.version': 'संस्करण 1.0.0',
+  'nav.collapse': 'संकुचित करें',
   'brand.tagline': 'मानक इंजन',
   'nav.workspace': 'कार्यक्षेत्र',
   'nav.dashboard': 'डैशबोर्ड',
@@ -194,9 +208,19 @@ const hi: Record<string, string> = {
   'notfound.desc': 'आप जिस पृष्ठ की तलाश कर रहे हैं वह मानक कार्यक्षेत्र का भाग नहीं है।',
   'notfound.dashboard': 'डैशबोर्ड',
   'notfound.recommend': 'अनुशंसा',
+  'dash.aspects': 'पहलू',
+  'dash.aspectsHint': 'BIS कैटलॉग में वर्गीकरण के पहलू',
+  'dash.coverageAspect': 'पहलू के अनुसार कवरेज',
 }
 
 const ta: Record<string, string> = {
+  'topbar.searchPlaceholder': 'IS எண், தலைப்பு அல்லது முக்கிய சொல்லால் தரநிலைகளைத் தேடுங்கள்…',
+  'nav.newRec': 'புதிய பரிந்துரை',
+  'nav.searchStd': 'தரநிலைகளைத் தேடுக',
+  'nav.standards': 'தரநிலைகள்',
+  'nav.slogan': 'பாதுகாப்பான, வலுவான, சிறந்த இந்தியாவை உருவாக்குவோம்',
+  'nav.version': 'பதிப்பு 1.0.0',
+  'nav.collapse': 'சுருக்குக',
   'brand.tagline': 'தரநிலை இயந்திரம்',
   'nav.workspace': 'பணியிடம்',
   'nav.dashboard': 'டாஷ்போர்டு',
@@ -270,9 +294,20 @@ const ta: Record<string, string> = {
   'notfound.desc': 'நீங்கள் தேடும் பக்கம் இந்த பணியிடத்தின் பகுதி அல்ல.',
   'notfound.dashboard': 'டாஷ்போர்டு',
   'notfound.recommend': 'பரிந்துரை',
+  'dash.aspects': 'அம்சங்கள்',
+  'dash.aspectsHint': 'BIS விபரப்பட்டியலில் வகைப்பாட்டின் அம்சங்கள்',
+  'dash.coverageAspect': 'அம்சங்களின் அடிப்படையிலான கவரேஜ்',
+
 }
 
 const bn: Record<string, string> = {
+  'topbar.searchPlaceholder': 'IS নম্বর, শিরোনাম বা কীওয়ার্ড দিয়ে মান খুঁজুন…',
+  'nav.newRec': 'নতুন সুপারিশ',
+  'nav.searchStd': 'মান খুঁজুন',
+  'nav.standards': 'মান',
+  'nav.slogan': 'আরও নিরাপদ, শক্তিশালী ও উন্নত ভারত গড়ি',
+  'nav.version': 'সংস্করণ 1.0.0',
+  'nav.collapse': 'সংকুচিত করুন',
   'brand.tagline': 'মান ইঞ্জিন',
   'nav.workspace': 'কর্মক্ষেত্র',
   'nav.dashboard': 'ড্যাশবোর্ড',
@@ -346,6 +381,10 @@ const bn: Record<string, string> = {
   'notfound.desc': 'আপনি যে পৃষ্ঠা খুঁজছেন তা এই কর্মক্ষেত্রের অংশ নয়।',
   'notfound.dashboard': 'ড্যাশবোর্ড',
   'notfound.recommend': 'সুপারিশ',
+  'dash.aspects': 'দিকসমূহ',
+  'dash.aspectsHint': 'BIS ক্যাটালগে শ্রেণীবিভাগের দিকসমূহ',
+  'dash.coverageAspect': 'দিক অনুযায়ী কভারেজ',
+
 }
 
 const DICTS: Record<Lang, Record<string, string>> = { en, hi, ta, bn }

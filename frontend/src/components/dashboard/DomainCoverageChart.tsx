@@ -1,13 +1,6 @@
-import {
-  Bar,
-  BarChart,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis,} from 'recharts'
 import { useI18n } from '../../i18n'
+import { labelFor } from '../../i18n/dataLabels'
 
 const ASPECT_COLORS = [
   '#2563eb',
@@ -24,20 +17,15 @@ const ASPECT_COLORS = [
   '#dc2626',
 ]
 
-export function DomainCoverageChart({
-  data,
-}: {
-  data: Record<string, number>
-}) {
-  const { t } = useI18n()
-
+export function DomainCoverageChart({ data,}: { data: Record<string, number>}) {
+  const { t, lang } = useI18n()
   const rows = Object.entries(data)
     .filter(([aspect]) => aspect.trim())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12)
     .map(([aspect, count], index) => ({
       aspect,
-      label: aspect,
+      label: labelFor("aspects",aspect, lang),
       count,
       fill: ASPECT_COLORS[index % ASPECT_COLORS.length],
     }))
@@ -46,7 +34,7 @@ export function DomainCoverageChart({
     <div className="panel p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-display text-base font-semibold text-slate-100">
-          Coverage by Aspect
+          {t('dash.coverageAspect')}
         </h3>
 
         <span className="font-mono text-[10px] uppercase tracking-widest text-slate-500">

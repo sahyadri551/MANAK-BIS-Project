@@ -1,8 +1,10 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { NavContent } from './NavContent'
 import { cn } from '../../utils/cn'
+import { useI18n } from '../../i18n'
 
 export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  const { t } = useI18n()
   return (
     <aside
       className={cn(
@@ -21,7 +23,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
           collapsed ? 'justify-center px-0' : 'px-3',
         )}
       >
-        {collapsed ? <ChevronRight className="h-4 w-4" /> : <><ChevronLeft className="h-4 w-4" /> Collapse</>}
+        {collapsed ? <ChevronRight className="h-4 w-4" /> : <><ChevronLeft className="h-4 w-4" /> {t('nav.collapse')}</>}
       </button>
     </aside>
   )
