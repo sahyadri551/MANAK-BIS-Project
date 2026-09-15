@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { ArrowRight, Sparkles } from 'lucide-react'
+import { VoiceInput } from '../common/VoiceInput'
 import { useI18n } from '../../i18n'
 
 const SAMPLES = [
@@ -16,7 +18,13 @@ type Props = {
 }
 
 export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
+  const voiceLanguage: Record<string, string> = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', bn: 'bn-IN' }
+  // Snapshot of query text at the moment the user starts speaking.
+  // Each transcript result replaces only the voice portion, so partial/
+  // progressive results don't accumulate into duplicated text.
+  const preVoiceQueryRef = useRef<string | null>(null)
+
   return (
     <div className="space-y-4">
       <div>
@@ -27,7 +35,12 @@ export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
           id="spec"
           data-testid="spec-input-textarea"
           value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
+          onChange={(e) => {
+            // If the user types manually, discard the saved snapshot so the
+            // next voice session starts fresh from the updated text.
+            preVoiceQueryRef.current = null
+            onQueryChange(e.target.value)
+          }}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') onSubmit()
           }}
@@ -35,6 +48,28 @@ export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
           placeholder={t('form.placeholder')}
           className="field resize-none font-sans leading-relaxed"
         />
+        <div className="mt-2 flex justify-end">
+          <VoiceInput
+            disabled={loading}
+            language={voiceLanguage[lang] ?? 'en-IN'}
+            onSessionStart={() => {
+              // Capture what was in the box before the mic opened.
+              preVoiceQueryRef.current = query.trim()
+            }}
+            onTranscript={(text) => {
+              const transcript = text.trim()
+              if (!transcript) return
+              // Always rebuild from the pre-voice snapshot so progressive
+              // results replace each other instead of stacking up.
+              const base = preVoiceQueryRef.current ?? query.trim()
+              onQueryChange(base ? `${base} ${transcript}` : transcript)
+            }}
+            onSessionEnd={() => {
+              // Reset so the next session snapshots the final text.
+              preVoiceQueryRef.current = null
+            }}
+          />
+        </div>
         <p className="mt-1.5 text-xs text-slate-600">{t('form.tipRun')}</p>
       </div>
 
