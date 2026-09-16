@@ -21,6 +21,7 @@ from app.services.localization import (
     loc_title,
     req_map,
 )
+from app.services.query_translation import translate_query_to_english
 from app.services.search_service import SearchService
 from app.services.standard_service import to_related
 
@@ -125,8 +126,12 @@ class MockRecommendationProvider(
         db,
         candidates,
     ):
+        # Translate non-English queries to English so the keyword tokenizer
+        # can match against the English standards corpus.
+        english_query = translate_query_to_english(request.query)
+
         terms = tokenize(
-            request.query
+            english_query
         )
 
         scored = []

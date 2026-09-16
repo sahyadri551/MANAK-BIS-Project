@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     recommendation_provider: str = "ml"
     max_recommendations: int = 10
     log_level: str = "INFO"
+    # Translation model used by query_translation.py
+    # Any litellm-compatible model string works, e.g.:
+    #   gemini/gemini-1.5-flash  (free tier, default)
+    #   openai/gpt-4o-mini
+    translation_model: str = "gemini/gemini-1.5-flash"
 
     @property
     def cors_origin_list(self) -> list[str]:

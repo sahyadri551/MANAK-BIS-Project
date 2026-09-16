@@ -14,6 +14,7 @@ from app.schemas.recommendation import RecommendRequest
 from app.ml.embedding_service import EmbeddingService
 from app.ml.retrieval_service import RetrievalService
 from app.ml.ranking_service import RankingService
+from app.services.query_translation import translate_query_to_english
 
 
 _STOPWORDS = {
@@ -394,6 +395,17 @@ class MLRecommendationProvider:
 
         if not query:
             return []
+
+        # ==================================================
+        # 0. QUERY TRANSLATION  (non-English → English)
+        # ==================================================
+        # If the query contains Devanagari / Tamil / Bengali / etc. characters,
+        # translate it to English before embedding so that the BGE English
+        # model can match it against the standards corpus correctly.
+        # translate_query_to_english() is a no-op for Latin-script queries, so
+        # there is zero overhead on normal English searches.
+
+        query = translate_query_to_english(query)
 
         # ==================================================
         # 1. EMBEDDING

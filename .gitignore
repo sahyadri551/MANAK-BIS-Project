@@ -26,7 +26,6 @@ dist/
 data/raw/*
 data/processed/*
 !data/**/.gitkeep
-.env.*
 *.env
 credentials.json
 *.pem
