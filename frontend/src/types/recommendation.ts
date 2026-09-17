@@ -33,11 +33,33 @@ export interface RecommendationItem {
   allied_standards: RelatedStandard[]
 }
 
+export interface PdfPageSummary {
+  page: number
+  characters: number
+  preview: string
+}
+
+export interface PdfAnalysisSummary {
+  file_name: string
+  page_count: number
+  readable_pages: number
+  character_count: number
+  word_count: number
+  detected_is_numbers: string[]
+  detected_sections: string[]
+  detected_references: string[]
+  document_title: string | null
+  document_subject: string | null
+  pages: PdfPageSummary[]
+  extraction_warnings: string[]
+}
+
 export interface RecommendResponse {
   request_id: string
   query: string
   recommendations: RecommendationItem[]
   similarity_map: SimilarityMapPoint[]
+  pdf_analysis?: PdfAnalysisSummary | null
 }
 
 export type SimilarityMapPoint = {
