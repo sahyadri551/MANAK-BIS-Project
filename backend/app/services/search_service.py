@@ -10,10 +10,16 @@ class SearchService:
     def __init__(self, db: Session):
         self.db = db
 
-    def record(self, request_id: str, request: RecommendRequest, result_count: int) -> None:
+    def record(
+        self,
+        request_id: str,
+        request: RecommendRequest,
+        result_count: int,
+        query_override: str | None = None,
+    ) -> None:
         entry = SearchHistory(
             request_id=request_id,
-            query=request.query,
+            query=query_override or request.query,
             document_name=request.document_name,
             filters=request.filters.model_dump(),
             result_count=result_count,
@@ -24,4 +30,4 @@ class SearchService:
     def history(self, limit: int = 50) -> list[SearchHistoryEntry]:
         stmt = select(SearchHistory).order_by(desc(SearchHistory.created_at)).limit(limit)
         rows = self.db.execute(stmt).scalars().all()
-        return [SearchHistoryEntry.model_validate(r) for r in rows]
+        return [SearchHistoryEntry.model_validate(row) for row in rows]
