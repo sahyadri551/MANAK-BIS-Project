@@ -1,39 +1,69 @@
 # BIS Standard Recommender — Backend
 
-FastAPI + SQLAlchemy + Alembic over PostgreSQL. Recommendations are served by a
-`MockRecommendationProvider` behind a `RecommendationProvider` interface, so the
-scoring engine can be swapped for a real ML/RAG one without touching the API
-contract or the frontend.
+FastAPI service for BIS standard search and recommendation. The backend uses PostgreSQL for authoritative catalogue data and supports both keyword-based and semantic recommendation providers.
 
-## Layout
-```
+## Structure
+
+```text
 app/
-  api/routes/    health, standards, recommendations, search
-  core/          config (env-driven), logging
-  db/            database, models, repositories, seed_data
-  schemas/       Pydantic request/response models
-  services/      standard / recommendation / search services + providers
-  ml/  rag/      inert placeholders for the future ML & RAG phase
-  main.py        FastAPI app
-server.py        supervisor entrypoint (imports app.main:app)
+  api/routes/       HTTP endpoints
+  core/             configuration and logging
+  db/               database models, repositories and seed data
+  schemas/          Pydantic request and response models
+  services/         recommendation, standards, search and allied-standard services
+  ml/               embedding, retrieval and ranking services
+  rag/              RAG integration interfaces
+  main.py           FastAPI application
+server.py           application entry point
 ```
 
-## Run locally
+## Recommendation Pipeline
+
+The ML provider processes a procurement specification through:
+
+1. Query translation for supported non-English input
+2. BGE embedding generation
+3. FAISS semantic retrieval
+4. Database validation and filtering
+5. Requirement-aware ranking
+6. Recommendation and semantic-map generation
+
+The recommendation provider is selected with `RECOMMENDATION_PROVIDER`. The default configuration uses the ML provider; the keyword provider remains available for lightweight deployments and testing.
+
+## Run Locally
+
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-cp ../.env.example .env         # then edit DATABASE_URL
+cp ../.env.example .env
 alembic upgrade head
 python -m scripts.seed_db
 uvicorn app.main:app --reload --port 8001
 ```
 
-## Key endpoint
-`POST /api/recommend`
-```json
-{ "query": "43 grade cement for RCC", "document_name": null,
-  "filters": { "status": null, "department": null, "aspect": null } }
+Set `DATABASE_URL` and other required values in `.env` before starting the service.
+
+## API
+
+Primary recommendation endpoint:
+
+```text
+POST /api/recommend
 ```
 
-Config is entirely environment-driven (`.env`). Set `RECOMMENDATION_PROVIDER=ml`
-once an `MLRecommendationProvider` exists.
+Example request:
+
+```json
+{
+  "query": "43 grade cement for RCC",
+  "document_name": null,
+  "filters": {
+    "status": null,
+    "department": null,
+    "aspect": null
+  }
+}
+```
+
+Additional routes cover health checks, standards, search and search history.
