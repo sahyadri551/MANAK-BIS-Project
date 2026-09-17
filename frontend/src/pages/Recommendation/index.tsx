@@ -3,12 +3,10 @@ import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { SlidersHorizontal } from 'lucide-react'
 import { SpecForm } from '../../components/recommendation/SpecForm'
-import { PdfUploadZone } from '../../components/recommendation/PdfUploadZone'
 import { FilterPanel } from '../../components/recommendation/FilterPanel'
 import { ResultsList } from '../../components/recommendation/ResultsList'
 import { Loader } from '../../components/common/Loader'
 import { getRecommendations } from '../../services/recommendationApi'
-import { analyzePdf } from '../../services/pdfApi'
 import { useI18n } from '../../i18n'
 import type { RecommendationFilters, RecommendationItem, SimilarityMapPoint } from '../../types/recommendation'
 import { ComparisonPanel } from '../../components/recommendation/ComparisonPanel'
@@ -30,7 +28,6 @@ export default function Recommendation() {
   const location = useLocation()
   const { t, lang } = useI18n()
   const [query, setQuery] = useState('')
-  const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [filters, setFilters] = useState<RecommendationFilters>(NO_FILTERS)
   const [results, setResults] = useState<RecommendationItem[] | null>(null)
   const [requestId, setRequestId] = useState<string | null>(null)
@@ -39,11 +36,7 @@ export default function Recommendation() {
   const [similarityMap, setSimilarityMap] = useState<SimilarityMapPoint[]>([])
 
   function saveRecommendationState(next: SavedRecommendationState) {
-    try {
-      sessionStorage.setItem(RECOMMENDATION_SESSION_KEY, JSON.stringify(next))
-    } catch {
-      // Session storage may be unavailable in private/restricted browser contexts.
-    }
+    try { sessionStorage.setItem(RECOMMENDATION_SESSION_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
   }
 
   function restoreRecommendationState(): SavedRecommendationState | null {
@@ -51,86 +44,30 @@ export default function Recommendation() {
       const raw = sessionStorage.getItem(RECOMMENDATION_SESSION_KEY)
       if (!raw) return null
       return JSON.parse(raw) as SavedRecommendationState
-    } catch {
-      return null
-    }
+    } catch { return null }
   }
 
   async function run(spec?: string) {
     const q = (spec ?? query).trim()
     if (!q) return
-
-    // Do not keep showing the previous search's visualization while a new
-    // recommendation request is in flight.
     setSimilarityMap([])
     setRequestId(null)
     setLoading(true)
-
     try {
-      const res = await getRecommendations({ query: q, document_name: pdfFile?.name ?? null, filters })
+      const res = await getRecommendations({ query: q, document_name: null, filters })
       setResults(res.recommendations)
       setSelectedIds(new Set())
       setSimilarityMap(res.similarity_map ?? [])
       setRequestId(res.request_id)
-      saveRecommendationState({
-        query: q,
-        filters,
-        results: res.recommendations,
-        similarityMap: res.similarity_map ?? [],
-        requestId: res.request_id,
-      })
+      saveRecommendationState({ query: q, filters, results: res.recommendations, similarityMap: res.similarity_map ?? [], requestId: res.request_id })
       toast.success(`${res.recommendations.length} ${t('results.toast')}`)
-    } catch {
-      toast.error(t('results.error'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function runPdfAnalysis() {
-    if (!pdfFile) return
-
-    setSimilarityMap([])
-    setRequestId(null)
-    setLoading(true)
-
-    try {
-      const res = await analyzePdf(
-        pdfFile,
-        filters,
-      )
-
-      setResults(res.recommendations)
-      setSelectedIds(new Set())
-      setSimilarityMap(res.similarity_map ?? [])
-      setRequestId(res.request_id)
-      saveRecommendationState({
-        query,
-        filters,
-        results: res.recommendations,
-        similarityMap: res.similarity_map ?? [],
-        requestId: res.request_id,
-      })
-
-      toast.success(
-        `${res.recommendations.length} BIS standards matched`,
-      )
-    } catch (error) {
-      console.error(error)
-      toast.error('PDF analysis failed')
-    } finally {
-      setLoading(false)
-    }
+    } catch { toast.error(t('results.error')) }
+    finally { setLoading(false) }
   }
 
   useEffect(() => {
     const passed = (location.state as { query?: string } | null)?.query
-    if (passed) {
-      setQuery(passed)
-      run(passed)
-      return
-    }
-
+    if (passed) { setQuery(passed); run(passed); return }
     const saved = restoreRecommendationState()
     if (saved?.results) {
       setQuery(saved.query || '')
@@ -142,7 +79,6 @@ export default function Recommendation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Re-run when language changes so results come back localized.
   useEffect(() => {
     if (results !== null && query.trim()) run()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,20 +87,11 @@ export default function Recommendation() {
   function toggleCompare(standardId: number) {
     setSelectedIds((current) => {
       const next = new Set(current)
-
-      if (next.has(standardId)) {
-        next.delete(standardId)
-      } else {
-        if (next.size >= 4) {
-          toast.error(
-            'You can compare up to 4 standards.',
-          )
-          return current
-        }
-
+      if (next.has(standardId)) next.delete(standardId)
+      else {
+        if (next.size >= 4) { toast.error('You can compare up to 4 standards.'); return current }
         next.add(standardId)
       }
-
       return next
     })
   }
@@ -175,82 +102,33 @@ export default function Recommendation() {
         <div className="panel p-5">
           <SpecForm query={query} onQueryChange={setQuery} onSubmit={() => run()} loading={loading} />
         </div>
-
         <div className="panel space-y-4 p-5">
           <div className="flex items-center gap-2 text-slate-300">
             <SlidersHorizontal className="h-4 w-4 text-accent" />
-            <h3 className="font-display text-sm font-semibold">{t('attach.title')}</h3>
+            <h3 className="font-display text-sm font-semibold">{t('filter.title')}</h3>
           </div>
-          <PdfUploadZone file={pdfFile} onFileChange={setPdfFile} onAnalyze={runPdfAnalysis} analyzing={loading}/>
           <FilterPanel value={filters} onChange={setFilters} />
         </div>
       </div>
 
       <div className="min-w-0">
-        {loading ? (
-          <Loader label={t('form.matching')} />
-        ) : results === null ? (
+        {loading ? <Loader label={t('form.matching')} /> : results === null ? (
           <div className="panel flex h-full min-h-[300px] flex-col items-center justify-center p-8 text-center">
-            <h2 className="font-display text-xl font-semibold text-slate-200">
-              {t('results.ready')}
-            </h2>
-            <p className="mt-2 max-w-md text-sm text-slate-500">
-              {t('results.readyDesc')}
-            </p>
+            <h2 className="font-display text-xl font-semibold text-slate-200">{t('results.ready')}</h2>
+            <p className="mt-2 max-w-md text-sm text-slate-500">{t('results.readyDesc')}</p>
           </div>
         ) : (
           <div className="space-y-4">
             <SemanticMatchChart items={results} />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-display text-lg font-semibold text-slate-100">
-                {results.length} {t('results.count')}
-              </h2>
+              <h2 className="font-display text-lg font-semibold text-slate-100">{results.length} {t('results.count')}</h2>
               <div className="flex items-center gap-3">
-                {selectedIds.size >= 2 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      document
-                        .getElementById('comparison-panel')
-                        ?.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'start',
-                        })
-                    }}
-                    className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20"
-                  >
-                    Compare Selected ({selectedIds.size})
-                  </button>
-                )}
-
-                {requestId && (
-                  <span className="font-mono text-[11px] text-slate-600">
-                    req {requestId.slice(0, 8)}
-                  </span>
-                )}
+                {selectedIds.size >= 2 && <button type="button" onClick={() => document.getElementById('comparison-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20">Compare Selected ({selectedIds.size})</button>}
+                {requestId && <span className="font-mono text-[11px] text-slate-600">req {requestId.slice(0, 8)}</span>}
               </div>
             </div>
-            <ResultsList
-              items={results}
-              selectedIds={selectedIds}
-              onToggleCompare={toggleCompare}
-            />
-
-            {selectedIds.size >= 2 && (
-              <ComparisonPanel
-                items={results.filter((item) =>
-                  selectedIds.has(item.standard_id),
-                )}
-                onRemove={(standardId) => {
-                  setSelectedIds((current) => {
-                    const next = new Set(current)
-                    next.delete(standardId)
-                    return next
-                  })
-                }}
-                onClear={() => setSelectedIds(new Set())}
-              />
-            )}
+            <ResultsList items={results} selectedIds={selectedIds} onToggleCompare={toggleCompare} />
+            {selectedIds.size >= 2 && <ComparisonPanel items={results.filter((item) => selectedIds.has(item.standard_id))} onRemove={(standardId) => setSelectedIds((current) => { const next = new Set(current); next.delete(standardId); return next })} onClear={() => setSelectedIds(new Set())} />}
           </div>
         )}
         <SimilarityMap points={similarityMap} />
