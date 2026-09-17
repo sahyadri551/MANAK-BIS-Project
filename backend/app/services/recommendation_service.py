@@ -84,7 +84,7 @@ class RecommendationService:
         self.provider = provider
         self.search_service = SearchService(db)
 
-    def recommend(self, request: RecommendRequest, lang: str = "en", history_query: str | None = None) -> RecommendResponse:
+    def recommend(self, request: RecommendRequest, lang: str = "en") -> RecommendResponse:
         request_id = uuid.uuid4().hex
         candidates = self.repo.list(status=request.filters.status, department=request.filters.department, aspect=request.filters.aspect)
         ranked = self.provider.recommend(request, self.db, candidates)
@@ -128,6 +128,6 @@ class RecommendationService:
             )
 
         self.db.commit()
-        self.search_service.record(request_id, request, len(items), query_override=history_query)
+        self.search_service.record(request_id, request, len(items))
         similarity_map = getattr(self.provider, "last_similarity_map", [])
         return RecommendResponse(request_id=request_id, query=request.query, recommendations=items, similarity_map=similarity_map)
