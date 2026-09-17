@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Mic, Square } from 'lucide-react'
+import { useI18n } from '../../i18n'
 
 type Props = {
   onTranscript: (text: string) => void
@@ -30,6 +31,7 @@ type SpeechWindow = Window & {
 }
 
 export function VoiceInput({ onTranscript, onSessionStart, onSessionEnd, disabled = false, language = 'en-IN' }: Props) {
+  const { t } = useI18n()
   const recognitionRef = useRef<Recognition | null>(null)
   const transcriptRef = useRef(onTranscript)
   const onSessionStartRef = useRef(onSessionStart)
@@ -59,7 +61,6 @@ export function VoiceInput({ onTranscript, onSessionStart, onSessionEnd, disable
     }
 
     const recognition = new SpeechRecognition()
-
     recognition.lang = language
     recognition.continuous = false
     recognition.interimResults = false
@@ -71,10 +72,7 @@ export function VoiceInput({ onTranscript, onSessionStart, onSessionEnd, disable
 
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript.trim()
-        
-      if (transcript) {
-        transcriptRef.current(transcript)
-      }
+      if (transcript) transcriptRef.current(transcript)
     }
 
     recognition.onerror = (event) => {
@@ -97,7 +95,6 @@ export function VoiceInput({ onTranscript, onSessionStart, onSessionEnd, disable
 
   function startListening() {
     if (!recognitionRef.current || disabled || listening) return
-
     try {
       recognitionRef.current.start()
     } catch (error) {
@@ -109,27 +106,25 @@ export function VoiceInput({ onTranscript, onSessionStart, onSessionEnd, disable
     recognitionRef.current?.stop()
   }
 
-  if (!supported) {
-    return null
-  }
+  if (!supported) return null
 
   return (
     <button
       type="button"
       onClick={listening ? stopListening : startListening}
       disabled={disabled}
-      aria-label={listening ? 'Stop voice input' : 'Start voice input'}
+      aria-label={listening ? t('voice.stop') : t('voice.start')}
       className="inline-flex items-center gap-2 rounded-lg border border-hairline bg-surface-2/40 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:border-accent/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
     >
       {listening ? (
         <>
           <Square className="h-3.5 w-3.5" />
-          Listening...
+          {t('voice.listening')}
         </>
       ) : (
         <>
           <Mic className="h-3.5 w-3.5" />
-          Speak
+          {t('voice.startShort')}
         </>
       )}
     </button>
