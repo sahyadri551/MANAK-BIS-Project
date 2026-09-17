@@ -12,7 +12,6 @@ app/
   schemas/          Pydantic request and response models
   services/         recommendation, standards, search and allied-standard services
   ml/               embedding, retrieval and ranking services
-  rag/              RAG integration interfaces
   main.py           FastAPI application
 server.py           application entry point
 ```
