@@ -1,4 +1,18 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+
+AlliedStandardCategory = Literal[
+    "normative_reference",
+    "test_method",
+    "terminology",
+    "safety",
+    "installation",
+    "product_spec",
+    "supersedes",
+    "superseded_by",
+]
 
 
 class RelatedStandard(BaseModel):
@@ -7,6 +21,7 @@ class RelatedStandard(BaseModel):
     title: str
     status: str
     relationship_type: str = "related"
+    category: AlliedStandardCategory | None = None
 
 
 class RecommendationFilters(BaseModel):
@@ -37,8 +52,9 @@ class RecommendationItem(BaseModel):
     reaffirmation_year: int | None = None
     matched_requirements: list[str] = Field(default_factory=list)
     reason: str = ""
-    evidence: list = Field(default_factory=list) # type: ignore
+    evidence: list = Field(default_factory=list)  # type: ignore
     related_standards: list[RelatedStandard] = Field(default_factory=list)
+    allied_standards: list[RelatedStandard] = Field(default_factory=list)
 
 
 class SimilarityMapPoint(BaseModel):
@@ -55,6 +71,4 @@ class RecommendResponse(BaseModel):
     request_id: str
     query: str
     recommendations: list[RecommendationItem]
-    similarity_map: list[SimilarityMapPoint] = Field(
-        default_factory=list
-    )
+    similarity_map: list[SimilarityMapPoint] = Field(default_factory=list)
