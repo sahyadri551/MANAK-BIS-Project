@@ -1,6 +1,7 @@
 export const hi: Record<string, string> = {
   'topbar.searchPlaceholder': 'IS नंबर, शीर्षक या कीवर्ड से मानक खोजें…',
   'nav.newRec': 'नई अनुशंसा',
+  'nav.pdfAnalysis': 'PDF विश्लेषण',
   'nav.searchStd': 'मानक खोजें',
   'nav.standards': 'मानक',
   'nav.slogan': 'सुरक्षित, सशक्त और बेहतर भारत का निर्माण',
