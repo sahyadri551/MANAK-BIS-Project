@@ -5,6 +5,7 @@ from io import BytesIO
 
 from pypdf import PdfReader
 from sqlalchemy.orm import Session
+
 from app.schemas.recommendation import (
     PdfAnalysisSummary,
     PdfPageSummary,
@@ -37,7 +38,12 @@ class PdfAnalysisService:
             raise ValueError("No readable text could be extracted from the PDF. Try a text-based PDF instead of a scanned image-only file.")
 
         request = RecommendRequest(query=query, document_name=file_name, filters=filters)
-        response = RecommendationService(self.db, get_provider()).recommend(request, lang=lang)
+        history_name = summary.document_title or file_name
+        response = RecommendationService(self.db, get_provider()).recommend(
+            request,
+            lang=lang,
+            history_query=f"PDF Search: {history_name}",
+        )
         response.pdf_analysis = summary
         return response
 
