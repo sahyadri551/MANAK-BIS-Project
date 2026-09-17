@@ -37,13 +37,9 @@ class PdfAnalysisService:
         if not query:
             raise ValueError("No readable text could be extracted from the PDF. Try a text-based PDF instead of a scanned image-only file.")
 
-        request = RecommendRequest(query=query, document_name=file_name, filters=filters)
         history_name = summary.document_title or file_name
-        response = RecommendationService(self.db, get_provider()).recommend(
-            request,
-            lang=lang,
-            history_query=f"PDF Search: {history_name}",
-        )
+        request = RecommendRequest(query=query, document_name=history_name, filters=filters)
+        response = RecommendationService(self.db, get_provider()).recommend(request, lang=lang)
         response.pdf_analysis = summary
         return response
 
