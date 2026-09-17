@@ -67,8 +67,30 @@ class SimilarityMapPoint(BaseModel):
     is_query: bool = False
 
 
+class PdfPageSummary(BaseModel):
+    page: int
+    characters: int
+    preview: str = ""
+
+
+class PdfAnalysisSummary(BaseModel):
+    file_name: str
+    page_count: int
+    readable_pages: int
+    character_count: int
+    word_count: int
+    detected_is_numbers: list[str] = Field(default_factory=list)
+    detected_sections: list[str] = Field(default_factory=list)
+    detected_references: list[str] = Field(default_factory=list)
+    document_title: str | None = None
+    document_subject: str | None = None
+    pages: list[PdfPageSummary] = Field(default_factory=list)
+    extraction_warnings: list[str] = Field(default_factory=list)
+
+
 class RecommendResponse(BaseModel):
     request_id: str
     query: str
     recommendations: list[RecommendationItem]
     similarity_map: list[SimilarityMapPoint] = Field(default_factory=list)
+    pdf_analysis: PdfAnalysisSummary | None = None
