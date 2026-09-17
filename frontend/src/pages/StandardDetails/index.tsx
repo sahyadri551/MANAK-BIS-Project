@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, CalendarClock, CheckCircle2, Download, FileText, Flag, Globe2, Hash, Layers, ListChecks, Network, ScrollText, ShieldCheck, Tag, Users } from 'lucide-react'
+import { ArrowLeft, Building2, CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Download, FileText, Flag, Globe2, Hash, Layers, ListChecks, Network, ScrollText, ShieldCheck, Tag, Users } from 'lucide-react'
 
 import { StatusBadge } from '../../components/common/StatusBadge'
 import { Loader } from '../../components/common/Loader'
@@ -68,7 +68,24 @@ const ALLIED_GROUPS: Array<{ key: AlliedStandardCategory; title: string }> = [
 function AlliedStandards({ standards }: { standards: RelatedStandard[] }) {
   const groups = ALLIED_GROUPS.map(({ key, title }) => ({ key, title, items: standards.filter((item) => item.category === key) })).filter((group) => group.items.length > 0)
   if (!groups.length) return null
-  return <Section icon={Network} title="Allied / Normative Standards"><div className="space-y-6">{groups.map((group) => <div key={group.key}><div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold text-slate-200">{group.title}</h3><span className="rounded-full border border-hairline bg-surface-2 px-2 py-0.5 font-mono text-[10px] text-slate-500">{group.items.length}</span></div><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{group.items.map((related) => <StandardCard key={`${group.key}-${related.id}`} standard={related} />)}</div></div>)}</div></Section>
+
+  return <Section icon={Network} title="Allied / Normative Standards"><div className="space-y-8">{groups.map((group) => <div key={group.key}><div className="mb-3 flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-200">{group.title}</h3><span className="rounded-full border border-hairline bg-surface-2 px-2 py-0.5 font-mono text-[10px] text-slate-500">{group.items.length}</span></div><AlliedGroupCards items={group.items} groupKey={group.key} /></div>)}</div></Section>
+}
+
+function AlliedGroupCards({ items, groupKey }: { items: RelatedStandard[]; groupKey: AlliedStandardCategory }) {
+  const [expanded, setExpanded] = useState(false)
+  const visibleItems = expanded ? items : items.slice(0, 3)
+  const hasMore = items.length > 3
+
+  return <>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {visibleItems.map((related) => <StandardCard key={`${groupKey}-${related.id}`} standard={related} />)}
+    </div>
+    {hasMore && <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-hairline bg-surface-2/60 px-3 py-2 text-xs font-medium text-slate-400 transition-colors hover:border-accent/40 hover:text-accent">
+      {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      {expanded ? 'Show fewer' : `Show all ${items.length}`}
+    </button>}
+  </>
 }
 
 export default function StandardDetails() {
@@ -115,11 +132,7 @@ export default function StandardDetails() {
     {keywords.length > 0 && <Section icon={Tag} title="Keywords"><div className="flex flex-wrap gap-2">{keywords.map((keyword) => <span key={keyword} className="rounded-lg border border-hairline bg-surface-2/50 px-3 py-1.5 text-xs text-slate-400">#{keyword}</span>)}</div></Section>}
     <Section icon={Flag} title="SDG Goals"><ListBlock values={formatList(standard.sdg_goals)} /></Section>
 
-    <AlliedStandardsNetwork
-      standard={{ id: standard.id, is_number: standard.is_number, title: standard.title }}
-      standards={allied}
-    />
-
+    <AlliedStandardsNetwork standard={{ id: standard.id, is_number: standard.is_number, title: standard.title }} standards={allied} />
     <AlliedStandards standards={allied} />
 
     <Section icon={Network} title="References & Relationships"><div className="grid grid-cols-1 gap-4 sm:grid-cols-2"><div><h3 className="mb-2 text-sm font-semibold text-slate-200">Cross References</h3><ListBlock values={formatList(standard.cross_references)} /></div><div><h3 className="mb-2 text-sm font-semibold text-slate-200">Referenced By</h3><ListBlock values={formatList(standard.referenced_by)} /></div><div><h3 className="mb-2 text-sm font-semibold text-slate-200">Supersedes</h3><ListBlock values={formatList(standard.supersedes)} /></div><div><h3 className="mb-2 text-sm font-semibold text-slate-200">Superseded By</h3><ListBlock values={formatList(standard.superseded_by)} /></div></div></Section>
