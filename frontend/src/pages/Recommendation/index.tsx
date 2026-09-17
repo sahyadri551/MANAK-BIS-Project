@@ -7,6 +7,7 @@ import { FilterPanel } from '../../components/recommendation/FilterPanel'
 import { ResultsList } from '../../components/recommendation/ResultsList'
 import { Loader } from '../../components/common/Loader'
 import { getRecommendations } from '../../services/recommendationApi'
+import { invalidateSearchHistory } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import type { RecommendationFilters, RecommendationItem, SimilarityMapPoint } from '../../types/recommendation'
 import { ComparisonPanel } from '../../components/recommendation/ComparisonPanel'
@@ -29,35 +30,75 @@ export default function Recommendation() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [similarityMap, setSimilarityMap] = useState<SimilarityMapPoint[]>([])
 
-  function saveRecommendationState(next: SavedRecommendationState) { try { sessionStorage.setItem(RECOMMENDATION_SESSION_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ } }
-  function restoreRecommendationState(): SavedRecommendationState | null { try { const raw = sessionStorage.getItem(RECOMMENDATION_SESSION_KEY); return raw ? JSON.parse(raw) as SavedRecommendationState : null } catch { return null } }
+  function saveRecommendationState(next: SavedRecommendationState) {
+    try {
+      sessionStorage.setItem(RECOMMENDATION_SESSION_KEY, JSON.stringify(next))
+    } catch {}
+  }
+
+  function restoreRecommendationState(): SavedRecommendationState | null {
+    try {
+      const raw = sessionStorage.getItem(RECOMMENDATION_SESSION_KEY)
+      return raw ? JSON.parse(raw) as SavedRecommendationState : null
+    } catch {
+      return null
+    }
+  }
 
   async function run(spec?: string) {
     const q = (spec ?? query).trim()
     if (!q) return
-    setSimilarityMap([]); setRequestId(null); setLoading(true)
+    setSimilarityMap([])
+    setRequestId(null)
+    setLoading(true)
     try {
       const res = await getRecommendations({ query: q, document_name: null, filters })
-      setResults(res.recommendations); setSelectedIds(new Set()); setSimilarityMap(res.similarity_map ?? []); setRequestId(res.request_id)
+      setResults(res.recommendations)
+      setSelectedIds(new Set())
+      setSimilarityMap(res.similarity_map ?? [])
+      setRequestId(res.request_id)
       saveRecommendationState({ query: q, filters, results: res.recommendations, similarityMap: res.similarity_map ?? [], requestId: res.request_id })
+      invalidateSearchHistory()
       toast.success(`${res.recommendations.length} ${t('results.toast')}`)
-    } catch { toast.error(t('results.error')) } finally { setLoading(false) }
+    } catch {
+      toast.error(t('results.error'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
     const passed = (location.state as { query?: string } | null)?.query
-    if (passed) { setQuery(passed); run(passed); return }
+    if (passed) {
+      setQuery(passed)
+      run(passed)
+      return
+    }
     const saved = restoreRecommendationState()
-    if (saved?.results) { setQuery(saved.query || ''); setFilters(saved.filters || NO_FILTERS); setResults(saved.results); setSimilarityMap(saved.similarityMap || []); setRequestId(saved.requestId || null) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (saved?.results) {
+      setQuery(saved.query || '')
+      setFilters(saved.filters || NO_FILTERS)
+      setResults(saved.results)
+      setSimilarityMap(saved.similarityMap || [])
+      setRequestId(saved.requestId || null)
+    }
   }, [])
-  useEffect(() => { if (results !== null && query.trim()) run() /* eslint-disable-line react-hooks/exhaustive-deps */ }, [lang])
+
+  useEffect(() => {
+    if (results !== null && query.trim()) run()
+  }, [lang])
 
   function toggleCompare(standardId: number) {
     setSelectedIds((current) => {
       const next = new Set(current)
       if (next.has(standardId)) next.delete(standardId)
-      else { if (next.size >= 4) { toast.error('You can compare up to 4 standards.'); return current }; next.add(standardId) }
+      else {
+        if (next.size >= 4) {
+          toast.error('You can compare up to 4 standards.')
+          return current
+        }
+        next.add(standardId)
+      }
       return next
     })
   }
