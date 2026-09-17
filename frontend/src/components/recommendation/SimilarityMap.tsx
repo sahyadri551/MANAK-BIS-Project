@@ -29,12 +29,12 @@ function MapTooltip({ active, payload }: TooltipProps) {
   const point = payload[0].payload
 
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 shadow-xl">
+    <div className="rounded-xl border border-slate-700/80 bg-slate-950/95 px-3 py-2.5 shadow-2xl backdrop-blur">
       <p className="font-mono text-xs font-semibold text-accent">
         {point.is_query ? 'QUERY' : point.is_number}
       </p>
 
-      <p className="mt-1 max-w-xs text-xs text-slate-300">
+      <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-300">
         {point.title}
       </p>
 
@@ -56,18 +56,25 @@ export function SimilarityMap({ points }: Props) {
   const standardPoints = points.filter((point) => !point.is_query)
 
   return (
-    <div className="panel p-5">
-      <div className="mb-4">
-        <h3 className="font-display text-base font-semibold text-slate-100">
-          Semantic Similarity Map
-        </h3>
-
-        <p className="mt-1 text-xs text-slate-500">
-          Standards closer to the query are semantically more similar.
-        </p>
+    <div className="panel overflow-hidden p-5">
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <h3 className="font-display text-base font-semibold text-slate-100">
+            Semantic Similarity Map
+          </h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Standards closer to the query are semantically more similar.
+          </p>
+        </div>
+        <div className="hidden items-center gap-2 text-[10px] text-slate-500 sm:flex">
+          <span className="h-2 w-2 rounded-full bg-sky-400" />
+          Standards
+          <span className="ml-2 h-2 w-2 rounded-full bg-amber-400" />
+          Query
+        </div>
       </div>
 
-      <div className="h-[420px] w-full">
+      <div className="h-[420px] w-full rounded-xl border border-hairline bg-surface-2/30 p-2">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart
             margin={{
@@ -77,31 +84,41 @@ export function SimilarityMap({ points }: Props) {
               left: 10,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid
+              stroke="#334155"
+              strokeDasharray="3 6"
+              opacity={0.45}
+            />
 
             <XAxis
               type="number"
               dataKey="x"
               name="X"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 10, fill: '#64748b' }}
+              axisLine={{ stroke: '#334155' }}
+              tickLine={{ stroke: '#334155' }}
             />
 
             <YAxis
               type="number"
               dataKey="y"
               name="Y"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 10, fill: '#64748b' }}
+              axisLine={{ stroke: '#334155' }}
+              tickLine={{ stroke: '#334155' }}
             />
 
             <Tooltip
-              cursor={{ strokeDasharray: '3 3' }}
+              cursor={{ stroke: '#64748b', strokeDasharray: '4 4' }}
               content={<MapTooltip />}
             />
 
             <Scatter
               name="Standards"
               data={standardPoints}
-              fill="#60a5fa"
+              fill="#38bdf8"
+              line={false}
+              shape="circle"
             />
 
             <Scatter
@@ -114,9 +131,9 @@ export function SimilarityMap({ points }: Props) {
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-3 flex items-center gap-5 text-xs text-slate-500">
+      <div className="mt-3 flex items-center gap-5 text-xs text-slate-500 sm:hidden">
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-blue-400" />
+          <span className="h-2.5 w-2.5 rounded-full bg-sky-400" />
           <span>BIS Standards</span>
         </div>
 
