@@ -14,8 +14,26 @@ type Props = {
   onToggleCompare: () => void
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  normative_reference: 'normative references',
+  test_method: 'test methods',
+  terminology: 'terminology',
+  safety: 'safety standards',
+  installation: 'installation standards',
+  product_spec: 'product specifications',
+  supersedes: 'supersedes',
+  superseded_by: 'superseded by',
+}
+
 export function RecommendationCard({ item, index, selected, onToggleCompare }: Props) {
   const { t } = useI18n()
+  const allied = item.allied_standards?.length ? item.allied_standards : item.related_standards
+  const counts = Object.entries(
+    allied.reduce<Record<string, number>>((acc, standard) => {
+      if (standard.category) acc[standard.category] = (acc[standard.category] || 0) + 1
+      return acc
+    }, {}),
+  )
 
   return (
     <Link
@@ -72,11 +90,7 @@ export function RecommendationCard({ item, index, selected, onToggleCompare }: P
           </div>
           <div className="flex flex-wrap gap-1.5">
             {item.matched_requirements.map((req, i) => (
-              <span
-                key={i}
-                data-testid="requirement-chip"
-                className="rounded-md border border-accent/20 bg-accent/10 px-2 py-0.5 text-[11px] text-blue-200"
-              >
+              <span key={i} data-testid="requirement-chip" className="rounded-md border border-accent/20 bg-accent/10 px-2 py-0.5 text-[11px] text-blue-200">
                 {req}
               </span>
             ))}
@@ -85,9 +99,20 @@ export function RecommendationCard({ item, index, selected, onToggleCompare }: P
       )}
 
       <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1.5">
-          <Link2 className="h-3.5 w-3.5" />
-          {item.related_standards.length} {t('card.related')}
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <Link2 className="h-3.5 w-3.5 shrink-0" />
+          {counts.length > 0 ? (
+            <span className="truncate">
+              {counts.map(([category, count], i) => (
+                <span key={category}>
+                  {i > 0 && ' · '}
+                  {count} {CATEGORY_LABELS[category] || category}
+                </span>
+              ))}
+            </span>
+          ) : (
+            <span>{allied.length} {t('card.related')}</span>
+          )}
         </span>
         <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-accent">
           {t('card.viewDetails')}
