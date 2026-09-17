@@ -1,122 +1,119 @@
 """Backend tests for BIS Standard Recommender."""
+
 import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://standard-suggest.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:8001").rstrip("/")
 API = f"{BASE_URL}/api"
 
 
 @pytest.fixture(scope="module")
 def client():
-    s = requests.Session()
-    s.headers.update({"Content-Type": "application/json"})
-    return s
+    session = requests.Session()
+    session.headers.update({"Content-Type": "application/json"})
+    return session
 
 
-# --- Health ---
 def test_health(client):
-    r = client.get(f"{API}/health")
-    assert r.status_code == 200
-    data = r.json()
+    response = client.get(f"{API}/health")
+    assert response.status_code == 200
+    data = response.json()
     assert data["status"] == "ok"
     assert data["database"] == "up"
 
 
-# --- Standards ---
 def test_list_standards(client):
-    r = client.get(f"{API}/standards", params={"limit": 100})
-    assert r.status_code == 200
-    data = r.json()
+    response = client.get(f"{API}/standards", params={"limit": 100})
+    assert response.status_code == 200
+    data = response.json()
     assert isinstance(data, list)
     assert len(data) >= 20, f"Expected ~21 standards, got {len(data)}"
 
 
 def test_standards_filter_department(client):
-    r = client.get(f"{API}/standards", params={"department": "Textiles", "limit": 50})
-    assert r.status_code == 200
-    data = r.json()
+    response = client.get(f"{API}/standards", params={"department": "Textiles", "limit": 50})
+    assert response.status_code == 200
+    data = response.json()
     assert len(data) > 0
-    for s in data:
-        assert s["department"] == "Textiles"
+    for standard in data:
+        assert standard["department"] == "Textiles"
 
 
 def test_standards_filter_domain(client):
-    r = client.get(f"{API}/standards", params={"domain": "cement"})
-    assert r.status_code == 200
-    data = r.json()
+    response = client.get(f"{API}/standards", params={"domain": "cement"})
+    assert response.status_code == 200
+    data = response.json()
     assert len(data) > 0
-    for s in data:
-        assert s["domain"] == "cement"
+    for standard in data:
+        assert standard["domain"] == "cement"
 
 
 def test_standards_search(client):
-    r = client.get(f"{API}/standards", params={"search": "cement"})
-    assert r.status_code == 200
-    assert len(r.json()) > 0
+    response = client.get(f"{API}/standards", params={"search": "cement"})
+    assert response.status_code == 200
+    assert len(response.json()) > 0
 
 
 def test_standard_detail(client):
-    r = client.get(f"{API}/standards", params={"limit": 1})
-    sid = r.json()[0]["id"]
-    r2 = client.get(f"{API}/standards/{sid}")
-    assert r2.status_code == 200
-    d = r2.json()
-    assert "related_standards" in d
-    assert "id" in d and d["id"] == sid
+    response = client.get(f"{API}/standards", params={"limit": 1})
+    standard_id = response.json()[0]["id"]
+    detail = client.get(f"{API}/standards/{standard_id}")
+    assert detail.status_code == 200
+    data = detail.json()
+    assert "related_standards" in data
+    assert data["id"] == standard_id
 
 
 def test_standard_detail_404(client):
-    r = client.get(f"{API}/standards/999999")
-    assert r.status_code == 404
+    response = client.get(f"{API}/standards/999999")
+    assert response.status_code == 404
 
 
 def test_stats_overview(client):
-    r = client.get(f"{API}/standards/stats/overview")
-    assert r.status_code == 200
-    d = r.json()
-    assert "total" in d
-    assert "by_domain" in d
-    assert "by_status" in d
-    assert "by_department" in d
-    assert d["total"] >= 20
+    response = client.get(f"{API}/standards/stats/overview")
+    assert response.status_code == 200
+    data = response.json()
+    for key in ("total", "by_domain", "by_status", "by_department"):
+        assert key in data
+    assert data["total"] >= 20
 
 
 def test_meta_filters(client):
-    r = client.get(f"{API}/standards/meta/filters")
-    assert r.status_code == 200
-    d = r.json()
-    for k in ("statuses", "departments", "aspects", "domains"):
-        assert k in d
-        assert isinstance(d[k], list)
+    response = client.get(f"{API}/standards/meta/filters")
+    assert response.status_code == 200
+    data = response.json()
+    for key in ("statuses", "departments", "aspects", "domains"):
+        assert key in data
+        assert isinstance(data[key], list)
 
 
-# --- Recommend ---
 def test_recommend_cement(client):
     payload = {
         "query": "43 grade cement for RCC 43 MPa",
         "document_name": None,
         "filters": {"status": None, "department": None, "aspect": None},
     }
-    r = client.post(f"{API}/recommend", json=payload)
-    assert r.status_code == 200, r.text
-    d = r.json()
-    for k in ("request_id", "query", "recommendations"):
-        assert k in d
-    recs = d["recommendations"]
-    assert len(recs) > 0
-    # Check IS 8112:2013 highly ranked (top 3)
-    top_is = [rec["is_number"] for rec in recs[:3]]
+    response = client.post(f"{API}/recommend", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    for key in ("request_id", "query", "recommendations"):
+        assert key in data
+
+    recommendations = data["recommendations"]
+    assert len(recommendations) > 0
+    top_is = [item["is_number"] for item in recommendations[:3]]
     assert "IS 8112:2013" in top_is, f"IS 8112:2013 not in top 3: {top_is}"
-    # Check contract fields
-    for rec in recs:
-        for k in ("standard_id", "is_number", "title", "score", "status",
-                  "department", "aspect", "matched_requirements", "reason",
-                  "evidence", "related_standards"):
-            assert k in rec, f"Missing field {k}"
-        assert isinstance(rec["score"], (int, float))
-        assert 0 <= rec["score"] <= 1
-        assert isinstance(rec["evidence"], list)
+
+    for recommendation in recommendations:
+        for key in (
+            "standard_id", "is_number", "title", "score", "status", "department",
+            "aspect", "matched_requirements", "reason", "evidence", "related_standards",
+        ):
+            assert key in recommendation, f"Missing field {key}"
+        assert isinstance(recommendation["score"], (int, float))
+        assert 0 <= recommendation["score"] <= 1
+        assert isinstance(recommendation["evidence"], list)
 
 
 def test_recommend_filter_textiles(client):
@@ -125,175 +122,172 @@ def test_recommend_filter_textiles(client):
         "document_name": None,
         "filters": {"status": None, "department": "Textiles", "aspect": None},
     }
-    r = client.post(f"{API}/recommend", json=payload)
-    assert r.status_code == 200
-    d = r.json()
-    for rec in d["recommendations"]:
-        assert rec["department"] == "Textiles"
+    response = client.post(f"{API}/recommend", json=payload)
+    assert response.status_code == 200
+    for recommendation in response.json()["recommendations"]:
+        assert recommendation["department"] == "Textiles"
 
 
-# --- Search history ---
 def test_search_history(client):
-    # Trigger a recommend first
-    client.post(f"{API}/recommend", json={
-        "query": "test history query cement",
-        "document_name": None,
-        "filters": {"status": None, "department": None, "aspect": None},
-    })
-    r = client.get(f"{API}/search/history")
-    assert r.status_code == 200
-    d = r.json()
-    assert isinstance(d, list) or (isinstance(d, dict) and "items" in d)
+    client.post(
+        f"{API}/recommend",
+        json={
+            "query": "test history query cement",
+            "document_name": None,
+            "filters": {"status": None, "department": None, "aspect": None},
+        },
+    )
+    response = client.get(f"{API}/search/history")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list) or (isinstance(data, dict) and "items" in data)
 
 
-# --- Language / Hindi localization ---
 DEV_RE = __import__("re").compile(r"[\u0900-\u097F]")
-
-
-def _has_devanagari(s):
-    return bool(s) and bool(DEV_RE.search(s))
-
-
-def test_standards_lang_hi(client):
-    r = client.get(f"{API}/standards", params={"lang": "hi", "limit": 100})
-    assert r.status_code == 200
-    data = r.json()
-    assert len(data) >= 20
-    # find IS 10500:2012
-    target = next((s for s in data if s.get("is_number") == "IS 10500:2012"), None)
-    assert target is not None, "IS 10500:2012 not found"
-    assert _has_devanagari(target["title"]), f"Hindi title expected, got: {target['title']}"
-    # department & aspect Hindi
-    hi_dept = any(_has_devanagari(s.get("department", "")) for s in data)
-    hi_asp = any(_has_devanagari(s.get("aspect", "")) for s in data)
-    assert hi_dept and hi_asp, "Expected Hindi department/aspect"
-
-
-def test_standards_lang_en_default(client):
-    r = client.get(f"{API}/standards", params={"limit": 5})
-    for s in r.json():
-        assert not _has_devanagari(s["title"]), f"English default expected, got: {s['title']}"
-
-
-def test_standard_detail_lang_hi(client):
-    r = client.get(f"{API}/standards", params={"limit": 100})
-    sid = next(s["id"] for s in r.json() if s["is_number"] == "IS 10500:2012")
-    r2 = client.get(f"{API}/standards/{sid}", params={"lang": "hi"})
-    assert r2.status_code == 200
-    d = r2.json()
-    assert _has_devanagari(d["title"])
-    assert _has_devanagari(d.get("scope", "")) or _has_devanagari(d.get("description", ""))
-    reqs = d.get("requirements", [])
-    if reqs:
-        # requirements may be list of strings or list of dicts
-        joined = " ".join([r_ if isinstance(r_, str) else str(r_) for r_ in reqs])
-        assert _has_devanagari(joined), f"Hindi requirements expected: {joined[:200]}"
-    for rel in d.get("related_standards", []):
-        assert _has_devanagari(rel.get("title", "")), f"Related std title not Hindi: {rel}"
-
-
-def test_recommend_lang_hi(client):
-    payload = {"query": "43 grade cement for RCC 43 MPa", "document_name": None,
-               "filters": {"status": None, "department": None, "aspect": None}}
-    r = client.post(f"{API}/recommend", params={"lang": "hi"}, json=payload)
-    assert r.status_code == 200, r.text
-    d = r.json()
-    recs = d["recommendations"]
-    assert len(recs) > 0
-    top_is = [rec["is_number"] for rec in recs[:3]]
-    assert "IS 8112:2013" in top_is, f"IS 8112:2013 not in top 3: {top_is}"
-    for rec in recs[:3]:
-        assert _has_devanagari(rec["title"]), f"Non-Hindi title: {rec['title']}"
-        assert _has_devanagari(rec["department"])
-        assert _has_devanagari(rec["aspect"])
-        mreq = rec.get("matched_requirements", [])
-        if mreq:
-            joined = " ".join([m if isinstance(m, str) else str(m) for m in mreq])
-            assert _has_devanagari(joined), f"matched_requirements not Hindi: {joined}"
-        # is_number & status unchanged (ASCII)
-        assert not _has_devanagari(rec["is_number"])
-        assert not _has_devanagari(rec["status"])
-        assert isinstance(rec["score"], (int, float))
-
-
-def test_recommend_lang_en(client):
-    payload = {"query": "43 grade cement for RCC 43 MPa", "document_name": None,
-               "filters": {"status": None, "department": None, "aspect": None}}
-    r = client.post(f"{API}/recommend", json=payload)
-    assert r.status_code == 200
-    for rec in r.json()["recommendations"][:3]:
-        assert not _has_devanagari(rec["title"])
-
-
-
-# --- Tamil (ta) & Bengali (bn) localization ---
 TA_RE = __import__("re").compile(r"[\u0B80-\u0BFF]")
 BN_RE = __import__("re").compile(r"[\u0980-\u09FF]")
 
 
-def _has_tamil(s):
-    return bool(s) and bool(TA_RE.search(s))
+def _has_devanagari(value):
+    return bool(value) and bool(DEV_RE.search(value))
 
 
-def _has_bengali(s):
-    return bool(s) and bool(BN_RE.search(s))
+def _has_tamil(value):
+    return bool(value) and bool(TA_RE.search(value))
 
 
-def _find_id_by_isnum(client, isnum):
-    r = client.get(f"{API}/standards", params={"search": isnum.split(":")[0].replace("IS ", "")})
-    for s in r.json():
-        if s["is_number"] == isnum:
-            return s["id"]
+def _has_bengali(value):
+    return bool(value) and bool(BN_RE.search(value))
+
+
+def test_standards_lang_hi(client):
+    response = client.get(f"{API}/standards", params={"lang": "hi", "limit": 100})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 20
+    target = next((item for item in data if item.get("is_number") == "IS 10500:2012"), None)
+    assert target is not None, "IS 10500:2012 not found"
+    assert _has_devanagari(target["title"])
+    assert any(_has_devanagari(item.get("department", "")) for item in data)
+    assert any(_has_devanagari(item.get("aspect", "")) for item in data)
+
+
+def test_standards_lang_en_default(client):
+    response = client.get(f"{API}/standards", params={"limit": 5})
+    for standard in response.json():
+        assert not _has_devanagari(standard["title"])
+
+
+def test_standard_detail_lang_hi(client):
+    response = client.get(f"{API}/standards", params={"limit": 100})
+    standard_id = next(item["id"] for item in response.json() if item["is_number"] == "IS 10500:2012")
+    detail = client.get(f"{API}/standards/{standard_id}", params={"lang": "hi"})
+    assert detail.status_code == 200
+    data = detail.json()
+    assert _has_devanagari(data["title"])
+    assert _has_devanagari(data.get("scope", "")) or _has_devanagari(data.get("description", ""))
+    requirements = data.get("requirements", [])
+    if requirements:
+        joined = " ".join(item if isinstance(item, str) else str(item) for item in requirements)
+        assert _has_devanagari(joined)
+    for related in data.get("related_standards", []):
+        assert _has_devanagari(related.get("title", ""))
+
+
+def test_recommend_lang_hi(client):
+    payload = {
+        "query": "43 grade cement for RCC 43 MPa",
+        "document_name": None,
+        "filters": {"status": None, "department": None, "aspect": None},
+    }
+    response = client.post(f"{API}/recommend", params={"lang": "hi"}, json=payload)
+    assert response.status_code == 200, response.text
+    recommendations = response.json()["recommendations"]
+    assert len(recommendations) > 0
+    top_is = [item["is_number"] for item in recommendations[:3]]
+    assert "IS 8112:2013" in top_is
+    for recommendation in recommendations[:3]:
+        assert _has_devanagari(recommendation["title"])
+        assert _has_devanagari(recommendation["department"])
+        assert _has_devanagari(recommendation["aspect"])
+        matched = recommendation.get("matched_requirements", [])
+        if matched:
+            assert _has_devanagari(" ".join(item if isinstance(item, str) else str(item) for item in matched))
+        assert not _has_devanagari(recommendation["is_number"])
+        assert not _has_devanagari(recommendation["status"])
+        assert isinstance(recommendation["score"], (int, float))
+
+
+def test_recommend_lang_en(client):
+    payload = {
+        "query": "43 grade cement for RCC 43 MPa",
+        "document_name": None,
+        "filters": {"status": None, "department": None, "aspect": None},
+    }
+    response = client.post(f"{API}/recommend", json=payload)
+    assert response.status_code == 200
+    for recommendation in response.json()["recommendations"][:3]:
+        assert not _has_devanagari(recommendation["title"])
+
+
+def _find_id_by_isnum(client, is_number):
+    response = client.get(
+        f"{API}/standards",
+        params={"search": is_number.split(":")[0].replace("IS ", "")},
+    )
+    for standard in response.json():
+        if standard["is_number"] == is_number:
+            return standard["id"]
     return None
 
 
-@pytest.mark.parametrize("lang,checker,name", [("ta", _has_tamil, "Tamil"), ("bn", _has_bengali, "Bengali")])
-def test_standards_lang_ta_bn(client, lang, checker, name):
-    r = client.get(f"{API}/standards", params={"lang": lang, "limit": 100})
-    assert r.status_code == 200
-    data = r.json()
+@pytest.mark.parametrize("lang,checker", [("ta", _has_tamil), ("bn", _has_bengali)])
+def test_standards_lang_ta_bn(client, lang, checker):
+    response = client.get(f"{API}/standards", params={"lang": lang, "limit": 100})
+    assert response.status_code == 200
+    data = response.json()
     assert len(data) >= 20
-    assert any(checker(s.get("title", "")) for s in data), f"Expected {name} titles"
-    assert any(checker(s.get("department", "")) for s in data), f"Expected {name} department"
-    assert any(checker(s.get("aspect", "")) for s in data), f"Expected {name} aspect"
+    assert any(checker(item.get("title", "")) for item in data)
+    assert any(checker(item.get("department", "")) for item in data)
+    assert any(checker(item.get("aspect", "")) for item in data)
 
 
-@pytest.mark.parametrize("lang,checker,name", [("ta", _has_tamil, "Tamil"), ("bn", _has_bengali, "Bengali")])
-def test_standard_detail_lang_ta_bn(client, lang, checker, name):
-    sid = _find_id_by_isnum(client, "IS 8112:2013")
-    assert sid is not None, "IS 8112:2013 not found via search"
-    r = client.get(f"{API}/standards/{sid}", params={"lang": lang})
-    assert r.status_code == 200
-    d = r.json()
-    assert checker(d["title"]), f"{name} title expected, got: {d['title']}"
-    assert checker(d.get("scope", "")) or checker(d.get("description", "")), f"{name} scope expected"
-    reqs = d.get("requirements", [])
-    if reqs:
-        joined = " ".join([x if isinstance(x, str) else str(x) for x in reqs])
-        assert checker(joined), f"{name} requirements expected: {joined[:200]}"
-    for rel in d.get("related_standards", []):
-        assert checker(rel.get("title", "")), f"Related std title not {name}: {rel}"
+@pytest.mark.parametrize("lang,checker", [("ta", _has_tamil), ("bn", _has_bengali)])
+def test_standard_detail_lang_ta_bn(client, lang, checker):
+    standard_id = _find_id_by_isnum(client, "IS 8112:2013")
+    assert standard_id is not None
+    response = client.get(f"{API}/standards/{standard_id}", params={"lang": lang})
+    assert response.status_code == 200
+    data = response.json()
+    assert checker(data["title"])
+    assert checker(data.get("scope", "")) or checker(data.get("description", ""))
+    requirements = data.get("requirements", [])
+    if requirements:
+        joined = " ".join(item if isinstance(item, str) else str(item) for item in requirements)
+        assert checker(joined)
+    for related in data.get("related_standards", []):
+        assert checker(related.get("title", ""))
 
 
-@pytest.mark.parametrize("lang,checker,name", [("ta", _has_tamil, "Tamil"), ("bn", _has_bengali, "Bengali")])
-def test_recommend_lang_ta_bn(client, lang, checker, name):
-    payload = {"query": "43 grade cement for RCC 43 MPa", "document_name": None,
-               "filters": {"status": None, "department": None, "aspect": None}}
-    r = client.post(f"{API}/recommend", params={"lang": lang}, json=payload)
-    assert r.status_code == 200, r.text
-    d = r.json()
-    recs = d["recommendations"]
-    assert len(recs) > 0
-    top_is = [rec["is_number"] for rec in recs[:3]]
-    assert "IS 8112:2013" in top_is, f"IS 8112:2013 not in top 3 ({lang}): {top_is}"
-    for rec in recs[:3]:
-        assert checker(rec["title"]), f"Non-{name} title: {rec['title']}"
-        assert checker(rec["department"]), f"Non-{name} dept: {rec['department']}"
-        assert checker(rec["aspect"]), f"Non-{name} aspect: {rec['aspect']}"
-        mreq = rec.get("matched_requirements", [])
-        if mreq:
-            joined = " ".join([m if isinstance(m, str) else str(m) for m in mreq])
-            assert checker(joined), f"matched_requirements not {name}: {joined}"
-        # is_number & status unchanged (ASCII)
-        assert not checker(rec["is_number"])
-        assert not checker(rec["status"])
+@pytest.mark.parametrize("lang,checker", [("ta", _has_tamil), ("bn", _has_bengali)])
+def test_recommend_lang_ta_bn(client, lang, checker):
+    payload = {
+        "query": "43 grade cement for RCC 43 MPa",
+        "document_name": None,
+        "filters": {"status": None, "department": None, "aspect": None},
+    }
+    response = client.post(f"{API}/recommend", params={"lang": lang}, json=payload)
+    assert response.status_code == 200, response.text
+    recommendations = response.json()["recommendations"]
+    assert len(recommendations) > 0
+    top_is = [item["is_number"] for item in recommendations[:3]]
+    assert "IS 8112:2013" in top_is
+    for recommendation in recommendations[:3]:
+        assert checker(recommendation["title"])
+        assert checker(recommendation["department"])
+        assert checker(recommendation["aspect"])
+        matched = recommendation.get("matched_requirements", [])
+        if matched:
+            assert checker(" ".join(item if isinstance(item, str) else str(item) for item in matched))
+        assert not checker(recommendation["is_number"])
+        assert not checker(recommendation["status"])
