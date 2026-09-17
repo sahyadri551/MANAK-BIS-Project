@@ -59,7 +59,13 @@ export default function Recommendation() {
   async function run(spec?: string) {
     const q = (spec ?? query).trim()
     if (!q) return
+
+    // Do not keep showing the previous search's visualization while a new
+    // recommendation request is in flight.
+    setSimilarityMap([])
+    setRequestId(null)
     setLoading(true)
+
     try {
       const res = await getRecommendations({ query: q, document_name: pdfFile?.name ?? null, filters })
       setResults(res.recommendations)
@@ -84,6 +90,8 @@ export default function Recommendation() {
   async function runPdfAnalysis() {
     if (!pdfFile) return
 
+    setSimilarityMap([])
+    setRequestId(null)
     setLoading(true)
 
     try {
