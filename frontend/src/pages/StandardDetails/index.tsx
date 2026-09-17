@@ -6,6 +6,7 @@ import { StatusBadge } from '../../components/common/StatusBadge'
 import { Loader } from '../../components/common/Loader'
 import { EmptyState } from '../../components/common/EmptyState'
 import { StandardCard } from '../../components/standards/StandardCard'
+import { AlliedStandardsNetwork } from '../../components/standards/AlliedStandardsNetwork'
 import { downloadStandardPdf, getStandard } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import type { AlliedStandardCategory, RelatedStandard, StandardDetail } from '../../types/standard'
@@ -57,7 +58,7 @@ const ALLIED_GROUPS: Array<{ key: AlliedStandardCategory; title: string }> = [
   { key: 'normative_reference', title: 'Normative References' },
   { key: 'test_method', title: 'Test Methods' },
   { key: 'terminology', title: 'Terminology' },
-  { key: 'safety', title: 'Safety' },
+  { key: 'safety', title: 'Safety Standards' },
   { key: 'installation', title: 'Installation' },
   { key: 'product_spec', title: 'Product Specifications' },
   { key: 'supersedes', title: 'Supersession — Supersedes' },
@@ -113,6 +114,11 @@ export default function StandardDetails() {
     <Section icon={ListChecks} title={t('details.keyReq')}>{requirements.length ? <ol className="space-y-3">{requirements.map((requirement, index) => <li key={`${requirement}-${index}`} className="flex gap-3 text-sm leading-6 text-slate-300"><span className="font-mono text-xs font-semibold text-accent">{String(index + 1).padStart(2, '0')}</span><span>{requirement}</span></li>)}</ol> : <p className="text-sm text-slate-500">No requirements available</p>}</Section>
     {keywords.length > 0 && <Section icon={Tag} title="Keywords"><div className="flex flex-wrap gap-2">{keywords.map((keyword) => <span key={keyword} className="rounded-lg border border-hairline bg-surface-2/50 px-3 py-1.5 text-xs text-slate-400">#{keyword}</span>)}</div></Section>}
     <Section icon={Flag} title="SDG Goals"><ListBlock values={formatList(standard.sdg_goals)} /></Section>
+
+    <AlliedStandardsNetwork
+      standard={{ id: standard.id, is_number: standard.is_number, title: standard.title }}
+      standards={allied}
+    />
 
     <AlliedStandards standards={allied} />
 
