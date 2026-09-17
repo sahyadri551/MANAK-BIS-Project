@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
 import Dashboard from './pages/Dashboard'
 import Recommendation from './pages/Recommendation'
+import PdfAnalysis from './pages/PdfAnalysis'
 import StandardDetails from './pages/StandardDetails'
 import SearchHistory from './pages/SearchHistory'
 import SearchStandards from './pages/SearchStandards'
@@ -14,6 +15,7 @@ export default function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/recommendation" element={<Recommendation />} />
+        <Route path="/pdf-analysis" element={<PdfAnalysis />} />
         <Route path="/search-standards" element={<SearchStandards />} />
         <Route path="/standards/:id" element={<StandardDetails />} />
         <Route path="/history" element={<SearchHistory />} />
