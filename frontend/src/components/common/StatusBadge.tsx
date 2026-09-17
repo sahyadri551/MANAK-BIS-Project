@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n'
 import { cn } from '../../utils/cn'
 import { STATUS_STYLES } from '../../utils/constants'
 import type { StandardStatus } from '../../types/standard'
@@ -9,7 +10,15 @@ const DOT: Record<string, string> = {
   Superseded: 'bg-slate-400',
 }
 
+const STATUS_KEYS: Record<string, string> = {
+  Active: 'status.active',
+  Withdrawn: 'status.withdrawn',
+  Draft: 'status.draft',
+  Superseded: 'status.superseded',
+}
+
 export function StatusBadge({ status, className }: { status: StandardStatus; className?: string }) {
+  const { t } = useI18n()
   return (
     <span
       data-testid={`status-badge-${status}`}
@@ -20,7 +29,7 @@ export function StatusBadge({ status, className }: { status: StandardStatus; cla
       )}
     >
       <span className={cn('h-1.5 w-1.5 rounded-full', DOT[status] ?? 'bg-slate-400')} />
-      {status}
+      {t(STATUS_KEYS[status] ?? '') || status}
     </span>
   )
 }
