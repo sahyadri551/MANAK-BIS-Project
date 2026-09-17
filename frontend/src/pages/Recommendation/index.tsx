@@ -82,10 +82,14 @@ export default function Recommendation() {
       setSimilarityMap(saved.similarityMap || [])
       setRequestId(saved.requestId || null)
     }
+    // The initial load intentionally restores state or handles a navigation query.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (results !== null && query.trim()) run()
+    // Refresh localized result text when the selected language changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang])
 
   function toggleCompare(standardId: number) {
