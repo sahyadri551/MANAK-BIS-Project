@@ -4,21 +4,53 @@ import { Search } from 'lucide-react'
 import { StatusBadge } from '../../components/common/StatusBadge'
 import { Loader } from '../../components/common/Loader'
 import { EmptyState } from '../../components/common/EmptyState'
-import { listStandards } from '../../services/standardsApi'
+import { getCachedStandards, listStandards } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import type { StandardSummary } from '../../types/standard'
+
+const INITIAL_LIMIT = 40
 
 export default function SearchStandards() {
   const { t, lang } = useI18n()
   const [term, setTerm] = useState('')
-  const [items, setItems] = useState<StandardSummary[]>([])
-  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState<StandardSummary[]>(() => getCachedStandards({ limit: INITIAL_LIMIT }) ?? [])
+  const [loading, setLoading] = useState(items.length === 0)
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
-    listStandards({ search: term || undefined, limit: 100 })
-      .then(setItems)
-      .finally(() => setLoading(false))
+    let active = true
+    const search = term.trim()
+    const params = search ? { search, limit: 100 } : { limit: INITIAL_LIMIT }
+    const cached = getCachedStandards(params)
+
+    if (cached) {
+      setItems(cached)
+      setLoading(false)
+      setSearching(false)
+      return () => { active = false }
+    }
+
+    setSearching(Boolean(search))
+    if (!search && items.length > 0) setLoading(false)
+    else setLoading(true)
+
+    const delay = window.setTimeout(() => {
+      listStandards(params)
+        .then((data) => {
+          if (active) setItems(data)
+        })
+        .finally(() => {
+          if (active) {
+            setLoading(false)
+            setSearching(false)
+          }
+        })
+    }, search ? 250 : 0)
+
+    return () => {
+      active = false
+      window.clearTimeout(delay)
+    }
   }, [term, lang])
 
   return (
@@ -33,27 +65,30 @@ export default function SearchStandards() {
           className="field pl-9"
         />
       </div>
-      {loading ? (
+      {loading && items.length === 0 ? (
         <Loader />
       ) : items.length === 0 ? (
         <EmptyState icon={Search} title="No standards found" />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((s) => (
-            <Link
-              key={s.id}
-              to={`/standards/${s.id}`}
-              data-testid={`search-result-${s.is_number}`}
-              className="panel p-4 transition-colors hover:border-accent/40"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-sm font-semibold text-accent">{s.is_number}</span>
-                <StatusBadge status={s.status} />
-              </div>
-              <p className="mt-1.5 line-clamp-2 text-sm text-slate-200">{s.title}</p>
-              <p className="mt-1 text-xs text-slate-500">{s.department}</p>
-            </Link>
-          ))}
+        <div className="relative">
+          {searching && <div className="absolute right-2 -top-10 text-xs text-slate-500">Searching…</div>}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {items.map((s) => (
+              <Link
+                key={s.id}
+                to={`/standards/${s.id}`}
+                data-testid={`search-result-${s.is_number}`}
+                className="panel p-4 transition-colors hover:border-accent/40"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-sm font-semibold text-accent">{s.is_number}</span>
+                  <StatusBadge status={s.status} />
+                </div>
+                <p className="mt-1.5 line-clamp-2 text-sm text-slate-200">{s.title}</p>
+                <p className="mt-1 text-xs text-slate-500">{s.department}</p>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>
