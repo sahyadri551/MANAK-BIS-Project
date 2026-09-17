@@ -30,17 +30,10 @@ export async function getStandard(id: number | string): Promise<StandardDetail> 
 }
 
 export async function downloadStandardPdf(id: number | string): Promise<void> {
-  const response = await api.get(`/standards/${id}/pdf`, {
-    responseType: 'blob',
-  })
-
-  const blob = new Blob([response.data], {
-    type: 'application/pdf',
-  })
-
+  const response = await api.get(`/standards/${id}/pdf`, { responseType: 'blob' })
+  const blob = new Blob([response.data], { type: 'application/pdf' })
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
-
   link.href = url
   link.download = `BIS_Standard_Report_${String(id)}.pdf`
   document.body.appendChild(link)
@@ -63,6 +56,10 @@ async function refreshStats(): Promise<StatsOverview> {
   return statsRequest
 }
 
+export function getCachedStats(): StatsOverview | null {
+  return statsCache?.data ?? null
+}
+
 export async function getStats(options: { force?: boolean } = {}): Promise<StatsOverview> {
   const cached = statsCache
   if (!options.force && cached) {
@@ -76,7 +73,6 @@ export async function getStats(options: { force?: boolean } = {}): Promise<Stats
 async function refreshSearchHistory(limit: number): Promise<SearchHistoryEntry[]> {
   const pending = historyRequests.get(limit)
   if (pending) return pending
-
   const request = api
     .get('/search/history', { params: { limit } })
     .then(({ data }) => {
@@ -86,9 +82,12 @@ async function refreshSearchHistory(limit: number): Promise<SearchHistoryEntry[]
     .finally(() => {
       historyRequests.delete(limit)
     })
-
   historyRequests.set(limit, request)
   return request
+}
+
+export function getCachedSearchHistory(limit = 50): SearchHistoryEntry[] | null {
+  return historyCache.get(limit)?.data ?? null
 }
 
 export async function getSearchHistory(limit = 50, options: { force?: boolean } = {}): Promise<SearchHistoryEntry[]> {
