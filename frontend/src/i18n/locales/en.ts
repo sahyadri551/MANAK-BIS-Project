@@ -9,6 +9,7 @@ export const en: Record<string, string> = {
   'nav.recommendation': 'Recommendation',
   'nav.history': 'Search History',
   'nav.newRec': 'New Recommendation',
+  'nav.pdfAnalysis': 'PDF Analysis',
   'nav.searchStd': 'Search Standards',
   'nav.browse': 'Browse by Domain',
   'nav.comparison': 'Standard Comparison',
