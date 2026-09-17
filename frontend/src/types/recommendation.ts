@@ -30,6 +30,7 @@ export interface RecommendationItem {
   reason: string
   evidence: unknown[]
   related_standards: RelatedStandard[]
+  allied_standards: RelatedStandard[]
 }
 
 export interface RecommendResponse {
@@ -48,5 +49,3 @@ export type SimilarityMapPoint = {
   score: number
   is_query: boolean
 }
-
-
