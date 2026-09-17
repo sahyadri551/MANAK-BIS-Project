@@ -19,7 +19,24 @@ type Props = {
 
 export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
   const { t, lang } = useI18n()
-  const voiceLanguage: Record<string, string> = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', bn: 'bn-IN' }
+  // BCP-47 tags passed to the browser's SpeechRecognition API. Coverage for the
+  // newer entries (or, pa, ur in particular) varies by browser/OS — Chrome on
+  // desktop and Android has the broadest support. Falls back to en-IN if a
+  // given browser doesn't ship a recognizer for the selected language.
+  const voiceLanguage: Record<string, string> = {
+    en: 'en-IN',
+    hi: 'hi-IN',
+    ta: 'ta-IN',
+    bn: 'bn-IN',
+    te: 'te-IN',
+    mr: 'mr-IN',
+    gu: 'gu-IN',
+    kn: 'kn-IN',
+    ml: 'ml-IN',
+    pa: 'pa-IN',
+    or: 'or-IN',
+    ur: 'ur-IN',
+  }
   // Snapshot of query text at the moment the user starts speaking.
   // Each transcript result replaces only the voice portion, so partial/
   // progressive results don't accumulate into duplicated text.
