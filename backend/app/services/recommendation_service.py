@@ -15,7 +15,6 @@ from app.services.allied_standards import build_allied_standards
 from app.services.localization import loc_aspect, loc_department, loc_title, req_map
 from app.services.query_translation import translate_query_to_english
 from app.services.search_service import SearchService
-from app.services.standard_service import to_related
 
 _STOPWORDS = {"the", "and", "for", "with", "that", "this", "have", "from", "must", "shall", "will", "need", "want", "should", "our", "are", "used", "use", "per", "any", "all", "not", "but", "can", "may", "into", "than", "then", "them", "a", "an", "of", "to", "in", "on", "at", "is", "it", "we", "be", "as", "or"}
 
@@ -85,7 +84,7 @@ class RecommendationService:
         self.provider = provider
         self.search_service = SearchService(db)
 
-    def recommend(self, request: RecommendRequest, lang: str = "en") -> RecommendResponse:
+    def recommend(self, request: RecommendRequest, lang: str = "en", history_query: str | None = None) -> RecommendResponse:
         request_id = uuid.uuid4().hex
         candidates = self.repo.list(status=request.filters.status, department=request.filters.department, aspect=request.filters.aspect)
         ranked = self.provider.recommend(request, self.db, candidates)
@@ -93,9 +92,7 @@ class RecommendationService:
 
         for rank, (std, score, matched, reason) in enumerate(ranked, start=1):
             allied = build_allied_standards(std, self.repo, lang)
-            related = [item for item in allied]
             rmap = req_map(std, lang)
-
             items.append(
                 RecommendationItem(
                     standard_id=std.id,
@@ -114,14 +111,23 @@ class RecommendationService:
                     matched_requirements=[rmap.get(matched_requirement, matched_requirement) for matched_requirement in matched],
                     reason=reason,
                     evidence=[],
-                    related_standards=related,
+                    related_standards=allied,
                     allied_standards=allied,
                 )
             )
-
-            self.db.add(Recommendation(request_id=request_id, standard_id=std.id, query=request.query, score=score, matched_requirements=matched, reason=reason, rank=rank))
+            self.db.add(
+                Recommendation(
+                    request_id=request_id,
+                    standard_id=std.id,
+                    query=request.query,
+                    score=score,
+                    matched_requirements=matched,
+                    reason=reason,
+                    rank=rank,
+                )
+            )
 
         self.db.commit()
-        self.search_service.record(request_id, request, len(items))
+        self.search_service.record(request_id, request, len(items), query_override=history_query)
         similarity_map = getattr(self.provider, "last_similarity_map", [])
         return RecommendResponse(request_id=request_id, query=request.query, recommendations=items, similarity_map=similarity_map)
