@@ -19,10 +19,6 @@ type Props = {
 
 export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
   const { t, lang } = useI18n()
-  // BCP-47 tags passed to the browser's SpeechRecognition API. Coverage for the
-  // newer entries (or, pa, ur in particular) varies by browser/OS — Chrome on
-  // desktop and Android has the broadest support. Falls back to en-IN if a
-  // given browser doesn't ship a recognizer for the selected language.
   const voiceLanguage: Record<string, string> = {
     en: 'en-IN',
     hi: 'hi-IN',
@@ -37,13 +33,15 @@ export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
     or: 'or-IN',
     ur: 'ur-IN',
   }
-  // Snapshot of query text at the moment the user starts speaking.
-  // Each transcript result replaces only the voice portion, so partial/
-  // progressive results don't accumulate into duplicated text.
   const preVoiceQueryRef = useRef<string | null>(null)
 
+  function handleSubmit(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault()
+    if (!loading && query.trim()) onSubmit()
+  }
+
   return (
-    <div className="space-y-4">
+    <form className="space-y-4" onSubmit={handleSubmit}>
       <div>
         <label htmlFor="spec" className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-slate-500">
           {t('form.specLabel')}
@@ -53,14 +51,17 @@ export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
           data-testid="spec-input-textarea"
           value={query}
           onChange={(e) => {
-            // If the user types manually, discard the saved snapshot so the
-            // next voice session starts fresh from the updated text.
             preVoiceQueryRef.current = null
             onQueryChange(e.target.value)
           }}
           onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') onSubmit()
+            if (e.isComposing) return
+            if (e.code === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault()
+              if (!loading && query.trim()) onSubmit()
+            }
           }}
+          aria-keyshortcuts="Control+Enter Meta+Enter"
           rows={5}
           placeholder={t('form.placeholder')}
           className="field resize-none font-sans leading-relaxed"
@@ -70,19 +71,15 @@ export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
             disabled={loading}
             language={voiceLanguage[lang] ?? 'en-IN'}
             onSessionStart={() => {
-              // Capture what was in the box before the mic opened.
               preVoiceQueryRef.current = query.trim()
             }}
             onTranscript={(text) => {
               const transcript = text.trim()
               if (!transcript) return
-              // Always rebuild from the pre-voice snapshot so progressive
-              // results replace each other instead of stacking up.
               const base = preVoiceQueryRef.current ?? query.trim()
               onQueryChange(base ? `${base} ${transcript}` : transcript)
             }}
             onSessionEnd={() => {
-              // Reset so the next session snapshots the final text.
               preVoiceQueryRef.current = null
             }}
           />
@@ -105,16 +102,15 @@ export function SpecForm({ query, onQueryChange, onSubmit, loading }: Props) {
       </div>
 
       <button
-        type="button"
+        type="submit"
         data-testid="spec-submit-button"
         disabled={loading || !query.trim()}
-        onClick={onSubmit}
         className="group inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Sparkles className="h-4 w-4" />
         {loading ? t('form.matching') : t('form.submit')}
         {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
       </button>
-    </div>
+    </form>
   )
 }
