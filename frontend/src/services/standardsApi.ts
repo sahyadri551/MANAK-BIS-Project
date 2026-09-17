@@ -16,12 +16,57 @@ type CacheEntry<T> = {
 
 let statsCache: CacheEntry<StatsOverview> | null = null
 let statsRequest: Promise<StatsOverview> | null = null
+const standardsCache = new Map<string, CacheEntry<StandardSummary[]>>()
+const standardsRequests = new Map<string, Promise<StandardSummary[]>>()
 const historyCache = new Map<number, CacheEntry<SearchHistoryEntry[]>>()
 const historyRequests = new Map<number, Promise<SearchHistoryEntry[]>>()
 
-export async function listStandards(params: ListParams = {}): Promise<StandardSummary[]> {
-  const { data } = await api.get('/standards', { params })
-  return data
+function standardsCacheKey(params: ListParams): string {
+  return JSON.stringify({
+    status: params.status ?? null,
+    department: params.department ?? null,
+    aspect: params.aspect ?? null,
+    domain: params.domain ?? null,
+    search: params.search ?? null,
+    limit: params.limit ?? null,
+  })
+}
+
+async function refreshStandards(params: ListParams, key: string): Promise<StandardSummary[]> {
+  const pending = standardsRequests.get(key)
+  if (pending) return pending
+
+  const request = api
+    .get('/standards', { params })
+    .then(({ data }) => {
+      standardsCache.set(key, { data, fetchedAt: Date.now() })
+      return data as StandardSummary[]
+    })
+    .finally(() => {
+      standardsRequests.delete(key)
+    })
+
+  standardsRequests.set(key, request)
+  return request
+}
+
+export async function listStandards(params: ListParams = {}, options: { force?: boolean } = {}): Promise<StandardSummary[]> {
+  const key = standardsCacheKey(params)
+  const cached = standardsCache.get(key)
+  if (!options.force && cached) {
+    if (Date.now() - cached.fetchedAt < CACHE_TTL) return cached.data
+    void refreshStandards(params, key)
+    return cached.data
+  }
+  return refreshStandards(params, key)
+}
+
+export function getCachedStandards(params: ListParams = {}): StandardSummary[] | null {
+  return standardsCache.get(standardsCacheKey(params))?.data ?? null
+}
+
+export function invalidateStandards(): void {
+  standardsCache.clear()
 }
 
 export async function getStandard(id: number | string): Promise<StandardDetail> {
