@@ -3,6 +3,7 @@ import { ArrowUpRight, Link2 } from 'lucide-react'
 
 import { StatusBadge } from '../common/StatusBadge'
 import { ScoreBadge } from '../common/ScoreBadge'
+import { CertificationBadge } from '../common/CertificationBadge'
 import { useI18n } from '../../i18n'
 
 import type { RecommendationItem } from '../../types/recommendation'
@@ -58,6 +59,7 @@ export function RecommendationCard({ item, index, selected, onToggleCompare }: P
             />
             <span className="font-mono text-sm font-semibold text-accent">{item.is_number}</span>
             <StatusBadge status={item.status} />
+            {item.certification_mandatory && <CertificationBadge scheme={item.certification_scheme} />}
           </div>
 
           <h3 className="mt-2 truncate font-display text-base font-semibold text-slate-100 group-hover:text-gray-400">

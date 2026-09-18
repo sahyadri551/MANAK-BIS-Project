@@ -54,6 +54,8 @@ export interface StandardSummary {
   ministry: string | null
   committee_name: string | null
   certification: string | null
+  certification_scheme: 'ISI_MANDATORY' | 'ISI_VOLUNTARY' | 'CRS' | 'HALLMARKING' | 'NONE'
+  certification_mandatory: boolean
 }
 
 export interface StandardDetail extends StandardSummary {
