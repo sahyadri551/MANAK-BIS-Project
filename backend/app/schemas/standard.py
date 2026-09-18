@@ -37,8 +37,6 @@ class StandardBase(BaseModel):
     certification: str | None = None
     certification_scheme: str = "NONE"
     certification_mandatory: bool = False
-    certification_scheme: str = "NONE"
-    certification_mandatory: bool = False
     has_qco_gazette: str | None = None
     sdg_goals: list = Field(default_factory=list)
     cross_references: list = Field(default_factory=list)
@@ -87,6 +85,8 @@ class StandardSummary(BaseModel):
     ministry: str | None = None
     committee_name: str | None = None
     certification: str | None = None
+    certification_scheme: str = "NONE"
+    certification_mandatory: bool = False
 
 
 class StandardDetail(StandardSummary):
