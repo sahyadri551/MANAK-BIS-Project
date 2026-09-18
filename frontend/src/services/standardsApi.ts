@@ -14,8 +14,8 @@ type CacheEntry<T> = {
   fetchedAt: number
 }
 
-let statsCache: CacheEntry<StatsOverview> | null = null
-let statsRequest: Promise<StatsOverview> | null = null
+const statsCache = new Map<string, CacheEntry<StatsOverview>>()
+const statsRequests = new Map<string, Promise<StatsOverview>>()
 const standardsCache = new Map<string, CacheEntry<StandardSummary[]>>()
 const standardsRequests = new Map<string, Promise<StandardSummary[]>>()
 const historyCache = new Map<number, CacheEntry<SearchHistoryEntry[]>>()
@@ -89,25 +89,27 @@ export async function downloadStandardPdf(id: number | string, lang: string): Pr
 }
 
 async function refreshStats(lang: string): Promise<StatsOverview> {
-  if (statsRequest) return statsRequest
-  statsRequest = api
+  const pending = statsRequests.get(lang)
+  if (pending) return pending
+  const request = api
     .get('/standards/stats/overview', { params: { lang } })
     .then(({ data }) => {
-      statsCache = { data, fetchedAt: Date.now() }
+      statsCache.set(lang, { data, fetchedAt: Date.now() })
       return data as StatsOverview
     })
     .finally(() => {
-      statsRequest = null
+      statsRequests.delete(lang)
     })
-  return statsRequest
+  statsRequests.set(lang, request)
+  return request
 }
 
-export function getCachedStats(): StatsOverview | null {
-  return statsCache?.data ?? null
+export function getCachedStats(lang = 'en'): StatsOverview | null {
+  return statsCache.get(lang)?.data ?? null
 }
 
 export async function getStats(lang: string, options: { force?: boolean } = {}): Promise<StatsOverview> {
-  const cached = statsCache
+  const cached = statsCache.get(lang)
   if (!options.force && cached) {
     if (Date.now() - cached.fetchedAt < CACHE_TTL) return cached.data
     void refreshStats(lang)

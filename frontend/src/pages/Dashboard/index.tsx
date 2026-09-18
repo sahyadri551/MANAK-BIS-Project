@@ -11,21 +11,21 @@ import type { StatsOverview } from '../../types/standard'
 import type { SearchHistoryEntry } from '../../types/api'
 
 export default function Dashboard() {
-  const { t } = useI18n()
-  const cachedStats = getCachedStats()
+  const { t, lang } = useI18n()
+  const cachedStats = getCachedStats(lang)
   const cachedHistory = getCachedSearchHistory(10)
   const [stats, setStats] = useState<StatsOverview | null>(cachedStats)
   const [history, setHistory] = useState<SearchHistoryEntry[]>(cachedHistory ?? [])
   const [loading, setLoading] = useState(!cachedStats)
 
   useEffect(() => {
-    Promise.all([getStats(), getSearchHistory(10)])
+    Promise.all([getStats(lang), getSearchHistory(10)])
       .then(([nextStats, nextHistory]) => {
         setStats(nextStats)
         setHistory(nextHistory)
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [lang])
 
   if (loading || !stats) return <Loader />
 
