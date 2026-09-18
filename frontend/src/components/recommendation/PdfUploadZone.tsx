@@ -27,22 +27,18 @@ export function PdfUploadZone({
     if (!selectedFile) return
 
     if (!selectedFile.name.toLowerCase().endsWith('.pdf')) {
-      toast.error('Only PDF files are accepted.')
+      toast.error(t('pdf.onlyPdf'))
       return
     }
 
     if (selectedFile.size > MAX_FILE_SIZE) {
-      toast.error('PDF is too large.', {
-        description: 'Maximum allowed size is 20 MB.',
-      })
+      toast.error(t('pdf.tooLarge'), { description: t('pdf.maxSize') })
       return
     }
 
     onFileChange(selectedFile)
 
-    toast.success('PDF attached', {
-      description: selectedFile.name,
-    })
+    toast.success(t('pdf.attached'), { description: selectedFile.name })
   }
 
   return (
@@ -124,7 +120,7 @@ export function PdfUploadZone({
         className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Sparkles className="h-4 w-4" />
-        {analyzing ? 'Analyzing PDF...' : 'Analyze PDF'}
+        {analyzing ? t('pdf.analyzing') : t('pdf.analyze')}
       </button>
     </div>
   )
