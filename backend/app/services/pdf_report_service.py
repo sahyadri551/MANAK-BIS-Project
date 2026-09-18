@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
+from pathlib import Path
 from io import BytesIO
 from xml.sax.saxutils import escape
 
@@ -11,6 +12,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     HRFlowable,
     Paragraph,
@@ -30,6 +33,41 @@ MUTED = colors.HexColor("#64748b")
 LINE = colors.HexColor("#dbe3ef")
 LIGHT = colors.HexColor("#f8fafc")
 WHITE = colors.white
+
+def _pdf_font_family(lang: str) -> tuple[str, str]:
+    """Return a Unicode-capable font family for the requested PDF language."""
+    if lang != "hi":
+        return "Helvetica", "Helvetica-Bold"
+
+    candidates = [
+        (Path(r"C:\Windows\Fonts\Nirmala.ttf"), Path(r"C:\Windows\Fonts\NirmalaB.ttf")),
+        (
+            Path("/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf"),
+            Path("/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf"),
+        ),
+        (
+            Path("/usr/share/fonts/truetype/lohit-devanagari/Lohit-Devanagari.ttf"),
+            Path("/usr/share/fonts/truetype/lohit-devanagari/Lohit-Devanagari.ttf"),
+        ),
+    ]
+
+    for regular_path, bold_path in candidates:
+        if not regular_path.exists():
+            continue
+        regular_name = "BISDevanagari"
+        bold_name = "BISDevanagariBold"
+        if regular_name not in pdfmetrics.getRegisteredFontNames():
+            pdfmetrics.registerFont(TTFont(regular_name, str(regular_path)))
+        if bold_name not in pdfmetrics.getRegisteredFontNames():
+            pdfmetrics.registerFont(
+                TTFont(bold_name, str(bold_path if bold_path.exists() else regular_path))
+            )
+        return regular_name, bold_name
+
+    raise RuntimeError(
+        "Hindi PDF generation requires a Devanagari Unicode font. "
+        "Install Nirmala UI (Windows) or Noto Sans Devanagari (Linux)."
+    )
 
 
 def _text(value: object, default: str = "-") -> str:
@@ -126,6 +164,7 @@ def _section_title(
 
 def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[bytes, str]:
     labels = PDF_LABELS.get(lang, PDF_LABELS["en"])
+    font_regular, font_bold = _pdf_font_family(lang)
     fallback = PDF_LABELS["en"]
     def label(key: str) -> str:
         return labels.get(key, fallback[key])
@@ -149,7 +188,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     title_style = ParagraphStyle(
         "ReportTitle",
         parent=styles["Title"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=18,
         leading=22,
         textColor=DARK,
@@ -170,7 +209,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     subtitle_style = ParagraphStyle(
         "Subtitle",
         parent=styles["Normal"],
-        fontName="Helvetica",
+        fontName=font_regular,
         fontSize=8.5,
         leading=12,
         textColor=MUTED,
@@ -468,7 +507,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
         canvas.saveState()
         canvas.setStrokeColor(LINE)
         canvas.line(20 * mm, 12 * mm, 190 * mm, 12 * mm)
-        canvas.setFont("Helvetica", 7)
+        canvas.setFont(font_regular, 7)
         canvas.setFillColor(MUTED)
         canvas.drawString(
             20 * mm,
