@@ -13,6 +13,7 @@ type Props = {
   index: number
   selected: boolean
   onToggleCompare: () => void
+  returnTo?: string
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -26,7 +27,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   superseded_by: 'superseded by',
 }
 
-export function RecommendationCard({ item, index, selected, onToggleCompare }: Props) {
+export function RecommendationCard({ item, index, selected, onToggleCompare, returnTo = '/recommendation' }: Props) {
   const { t } = useI18n()
   const allied = item.allied_standards?.length ? item.allied_standards : item.related_standards
   const counts = Object.entries(
@@ -38,7 +39,7 @@ export function RecommendationCard({ item, index, selected, onToggleCompare }: P
 
   return (
     <Link
-      to={`/standards/${item.standard_id}`}
+      to={{ pathname: `/standards/${item.standard_id}`, state: { from: returnTo } }}
       data-testid={`recommendation-card-${item.is_number}`}
       style={{ animationDelay: `${index * 60}ms` }}
       className="panel group block animate-fade-up p-5 transition-colors hover:border-accent/40"
