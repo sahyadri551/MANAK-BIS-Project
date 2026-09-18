@@ -10,12 +10,15 @@ import {
 } from 'recharts'
 
 import type { RecommendationItem } from '../../types/recommendation'
+import { useI18n } from '../../i18n'
+import { pdfCopy } from '../../i18n/pdfCopy'
 
 type Props = {
   items: RecommendationItem[]
 }
 
 export function SemanticMatchChart({ items }: Props) {
+  const { lang } = useI18n()
   if (items.length === 0) {
     return null
   }
@@ -31,14 +34,14 @@ export function SemanticMatchChart({ items }: Props) {
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
           <h3 className="font-display text-base font-semibold text-slate-100">
-            Semantic Match Overview
+            {pdfCopy(lang, 'semanticTitle')}
           </h3>
           <p className="mt-1 text-xs text-slate-500">
-            Standards ranked by semantic similarity to your search.
+            {pdfCopy(lang, 'semanticDesc')}
           </p>
         </div>
         <span className="hidden rounded-full border border-accent/20 bg-accent/10 px-2.5 py-1 font-mono text-[10px] font-semibold text-accent sm:inline-flex">
-          {items.length} matches
+          {items.length} {pdfCopy(lang, 'matches')}
         </span>
       </div>
 
@@ -95,7 +98,7 @@ export function SemanticMatchChart({ items }: Props) {
 
           <Tooltip
             cursor={{ fill: '#334155', opacity: 0.18 }}
-            formatter={(value) => [`${value}%`, 'Match score']}
+            formatter={(value) => [`${value}%`, pdfCopy(lang, 'matchScore')]}
             labelFormatter={(label) => {
               const item = chartData.find((row) => row.name === label)
               return item?.title ?? label

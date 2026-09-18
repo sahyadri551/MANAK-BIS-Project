@@ -9,6 +9,8 @@ import {
 } from 'recharts'
 
 import type { SimilarityMapPoint } from '../../types/recommendation'
+import { useI18n } from '../../i18n'
+import { pdfCopy } from '../../i18n/pdfCopy'
 
 type Props = {
   points: SimilarityMapPoint[]
@@ -22,6 +24,7 @@ type TooltipProps = {
 }
 
 function MapTooltip({ active, payload }: TooltipProps) {
+  const { lang } = useI18n()
   if (!active || !payload?.length) {
     return null
   }
@@ -31,7 +34,7 @@ function MapTooltip({ active, payload }: TooltipProps) {
   return (
     <div className="rounded-xl border border-slate-700/80 bg-slate-950/95 px-3 py-2.5 shadow-2xl backdrop-blur">
       <p className="font-mono text-xs font-semibold text-accent">
-        {point.is_query ? 'QUERY' : point.is_number}
+        {point.is_query ? pdfCopy(lang, 'query') : point.is_number}
       </p>
 
       <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-300">
@@ -40,7 +43,7 @@ function MapTooltip({ active, payload }: TooltipProps) {
 
       {!point.is_query && (
         <p className="mt-1 text-[11px] text-slate-500">
-          Match score: {(point.score * 100).toFixed(1)}%
+          {pdfCopy(lang, 'matchScore')}: {(point.score * 100).toFixed(1)}%
         </p>
       )}
     </div>
@@ -48,6 +51,7 @@ function MapTooltip({ active, payload }: TooltipProps) {
 }
 
 export function SimilarityMap({ points }: Props) {
+  const { lang } = useI18n()
   if (!points || points.length === 0) {
     return null
   }
@@ -60,10 +64,10 @@ export function SimilarityMap({ points }: Props) {
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
           <h3 className="font-display text-base font-semibold text-slate-100">
-            Semantic Similarity Map
+            {pdfCopy(lang, 'similarityMapTitle')}
           </h3>
           <p className="mt-1 text-xs text-slate-500">
-            Standards closer to the query are semantically more similar.
+            {pdfCopy(lang, 'similarityMapDesc')}
           </p>
         </div>
         <div className="hidden items-center gap-2 text-[10px] text-slate-500 sm:flex">
@@ -93,7 +97,7 @@ export function SimilarityMap({ points }: Props) {
             <XAxis
               type="number"
               dataKey="x"
-              name="X"
+              name={pdfCopy(lang, "xAxis")}
               tick={{ fontSize: 10, fill: '#64748b' }}
               axisLine={{ stroke: '#334155' }}
               tickLine={{ stroke: '#334155' }}
@@ -102,7 +106,7 @@ export function SimilarityMap({ points }: Props) {
             <YAxis
               type="number"
               dataKey="y"
-              name="Y"
+              name={pdfCopy(lang, "yAxis")}
               tick={{ fontSize: 10, fill: '#64748b' }}
               axisLine={{ stroke: '#334155' }}
               tickLine={{ stroke: '#334155' }}
@@ -114,7 +118,7 @@ export function SimilarityMap({ points }: Props) {
             />
 
             <Scatter
-              name="Standards"
+              name={pdfCopy(lang, "standards")}
               data={standardPoints}
               fill="#38bdf8"
               line={false}
@@ -122,7 +126,7 @@ export function SimilarityMap({ points }: Props) {
             />
 
             <Scatter
-              name="Query"
+              name={pdfCopy(lang, "query")}
               data={queryPoints}
               fill="#f59e0b"
               shape="star"
@@ -134,7 +138,7 @@ export function SimilarityMap({ points }: Props) {
       <div className="mt-3 flex items-center gap-5 text-xs text-slate-500 sm:hidden">
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-sky-400" />
-          <span>BIS Standards</span>
+          <span>{pdfCopy(lang, 'standards')}</span>
         </div>
 
         <div className="flex items-center gap-2">

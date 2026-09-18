@@ -5,6 +5,7 @@ import { StatusBadge } from '../common/StatusBadge'
 import { ScoreBadge } from '../common/ScoreBadge'
 import { CertificationBadge } from '../common/CertificationBadge'
 import { useI18n } from '../../i18n'
+import { pdfCopy } from '../../i18n/pdfCopy'
 
 import type { RecommendationItem } from '../../types/recommendation'
 
@@ -16,19 +17,8 @@ type Props = {
   returnTo?: string
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  normative_reference: 'normative references',
-  test_method: 'test methods',
-  terminology: 'terminology',
-  safety: 'safety standards',
-  installation: 'installation standards',
-  product_spec: 'product specifications',
-  supersedes: 'supersedes',
-  superseded_by: 'superseded by',
-}
-
 export function RecommendationCard({ item, index, selected, onToggleCompare, returnTo = '/recommendation' }: Props) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const allied = item.allied_standards?.length ? item.allied_standards : item.related_standards
   const counts = Object.entries(
     allied.reduce<Record<string, number>>((acc, standard) => {
@@ -109,7 +99,7 @@ export function RecommendationCard({ item, index, selected, onToggleCompare, ret
               {counts.map(([category, count], i) => (
                 <span key={category}>
                   {i > 0 && ' · '}
-                  {count} {CATEGORY_LABELS[category] || category}
+                  {count} {pdfCopy(lang, `category.${category}`)}
                 </span>
               ))}
             </span>
