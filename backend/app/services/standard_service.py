@@ -150,7 +150,7 @@ class StandardService:
             raw_is_status=standard.raw_is_status,
             created_at=standard.created_at,
             updated_at=standard.updated_at,
-            related_standards=allied,
+            related_standards=[to_related(target, rel_type, lang) for target, rel_type in self.repo.related(standard.id)],
             allied_standards=allied,
         )
 

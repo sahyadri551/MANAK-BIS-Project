@@ -111,7 +111,7 @@ class RecommendationService:
                     matched_requirements=[rmap.get(matched_requirement, matched_requirement) for matched_requirement in matched],
                     reason=reason,
                     evidence=[],
-                    related_standards=allied,
+                    related_standards=[to_related(target, rel_type, lang) for target, rel_type in self.repo.related(std.id)],
                     allied_standards=allied,
                 )
             )
