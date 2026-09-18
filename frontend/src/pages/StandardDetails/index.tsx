@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft, Building2, CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Download, FileText, Flag, Globe2, Hash, Layers, ListChecks, Network, ScrollText, ShieldCheck, Tag, Users } from 'lucide-react'
 
 import { StatusBadge } from '../../components/common/StatusBadge'
@@ -91,6 +91,7 @@ function AlliedGroupCards({ items, groupKey }: { items: RelatedStandard[]; group
 
 export default function StandardDetails() {
   const { id } = useParams()
+  const location = useLocation()
   const { t, lang } = useI18n()
   const [standard, setStandard] = useState<StandardDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -115,9 +116,10 @@ export default function StandardDetails() {
   const requirements = standard.requirements || []
   const keywords = standard.keywords || []
   const allied = standard.allied_standards?.length ? standard.allied_standards : standard.related_standards
+  const backPath = (location.state as { from?: string } | null)?.from || '/recommendation'
 
   return <div data-testid="standard-details-container" className="mx-auto max-w-6xl space-y-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><Link to="/recommendation" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200"><ArrowLeft className="h-4 w-4" />{t('details.back')}</Link><button type="button" onClick={handleDownloadPdf} disabled={downloading} className="inline-flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-medium text-accent disabled:opacity-60"><Download className="h-4 w-4" />{downloading ? 'Generating PDF...' : 'Generate PDF Report'}</button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><Link to={backPath} className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200"><ArrowLeft className="h-4 w-4" />{t('details.back')}</Link><button type="button" onClick={handleDownloadPdf} disabled={downloading} className="inline-flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-medium text-accent disabled:opacity-60"><Download className="h-4 w-4" />{downloading ? 'Generating PDF...' : 'Generate PDF Report'}</button></div>
     <div className="panel animate-scale-in overflow-hidden"><div className="p-6 sm:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-lg border border-accent/20 bg-accent/5 px-3 py-1.5 font-mono text-lg font-bold text-accent">{standard.is_number}</span><StatusBadge status={standard.status} />{standard.domain && <span className="rounded-full border border-hairline bg-surface-2 px-3 py-1 text-xs text-slate-400">{standard.domain}</span>}{standard.latest_version && <span className="rounded-full border border-hairline bg-surface-2 px-3 py-1 text-xs text-slate-400">Latest: {standard.latest_version}</span>}</div><h1 className="mt-4 max-w-5xl font-display text-2xl font-bold leading-tight text-slate-100 sm:text-3xl">{standard.title}</h1>{standard.short_title && <p className="mt-2 text-sm text-slate-500">{standard.short_title}</p>}<div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"><Attribute icon={Building2} label="Department" value={department} /><Attribute icon={Layers} label="Aspect" value={valueOrDash(standard.aspect)} /><Attribute icon={CalendarClock} label="Year" value={valueOrDash(standard.year)} /><Attribute icon={CalendarClock} label="Reaffirmation Year" value={valueOrDash(standard.reaffirmation_year)} /></div></div>{standard.certification_mandatory && <div className="border-t border-amber-400/20 bg-amber-400/10 px-6 py-4 sm:px-8"><CertificationBadge scheme={standard.certification_scheme} prominent /></div>}</div>
     <Section icon={Layers} title="Classification"><MetadataGrid items={[{ icon: Layers, label: 'Group Classification', value: valueOrDash(standard.group_classification) }, { icon: Layers, label: 'Group', value: valueOrDash(standard.group) }, { icon: Layers, label: 'Sub Group', value: valueOrDash(standard.sub_group) }, { icon: Layers, label: 'Sub Sub Group', value: valueOrDash(standard.sub_sub_group) }, { icon: Globe2, label: 'Language', value: valueOrDash(standard.language) }, { icon: Hash, label: 'ICS Code', value: valueOrDash(standard.ics_code) }]} /></Section>
     <Section icon={CalendarClock} title="Publication & Validity"><MetadataGrid items={[{ icon: CalendarClock, label: 'Published On', value: formatDate(standard.published_on) }, { icon: CalendarClock, label: 'Valid Upto', value: formatDate(standard.valid_upto) }, { icon: CalendarClock, label: 'Review On', value: formatDate(standard.review_on) }, { icon: CheckCircle2, label: 'Reaffirmation Year', value: valueOrDash(standard.reaffirmation_year) }, { icon: Network, label: 'Standard Base', value: valueOrDash(standard.standard_base) }, { icon: ScrollText, label: 'Latest Version', value: valueOrDash(standard.latest_version) }]} /></Section>

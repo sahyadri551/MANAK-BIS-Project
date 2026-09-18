@@ -10,12 +10,14 @@ type Props = {
   items: RecommendationItem[] | null
   selectedIds?: Set<number>
   onToggleCompare?: (standardId: number) => void
+  returnTo?: string
 }
 
 export function ResultsList({
   items,
   selectedIds = new Set<number>(),
   onToggleCompare,
+  returnTo = '/recommendation',
 }: Props) {
   const { t } = useI18n()
 
@@ -49,6 +51,7 @@ export function ResultsList({
           onToggleCompare={() =>
             onToggleCompare?.(item.standard_id)
           }
+          returnTo={returnTo}
         />
       ))}
     </div>
