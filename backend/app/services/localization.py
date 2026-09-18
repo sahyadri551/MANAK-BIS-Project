@@ -124,7 +124,16 @@ def loc_requirements(std, lang: str) -> list[str]:
 
 
 def loc_department(department, lang: str):
-    return DEPARTMENT_I18N.get(lang, {}).get(department, department)
+    if not department:
+        return department
+    labels = DEPARTMENT_I18N.get(lang, {})
+    if department in labels:
+        return labels[department]
+    normalized = department.strip().upper()
+    if normalized.endswith(" DEPARTMENT"):
+        short = normalized.removesuffix(" DEPARTMENT").title()
+        return labels.get(short, department)
+    return department
 
 
 def loc_aspect(aspect, lang: str):

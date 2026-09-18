@@ -355,4 +355,4 @@ BN = {
     },
 }
 
-TRANSLATIONS = {"ta": TA, "bn": BN}
+try:\n    from app.db.seed_i18n_extra import EXTRA_TRANSLATIONS\nexcept ImportError:\n    EXTRA_TRANSLATIONS = {}\n\nTRANSLATIONS = {"ta": TA, "bn": BN, **EXTRA_TRANSLATIONS}
