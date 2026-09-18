@@ -21,6 +21,7 @@ from reportlab.platypus import (
 )
 
 from app.schemas.standard import StandardDetail
+from app.services.pdf_labels import PDF_LABELS
 
 
 PRIMARY = colors.HexColor("#2563eb")
@@ -123,7 +124,12 @@ def _section_title(
     return Paragraph(escape(title), section_style)
 
 
-def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
+def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[bytes, str]:
+    labels = PDF_LABELS.get(lang, PDF_LABELS["en"])
+    fallback = PDF_LABELS["en"]
+    def label(key: str) -> str:
+        return labels.get(key, fallback[key])
+
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(
@@ -236,7 +242,7 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
     if standard.short_title:
         story.append(
             Paragraph(
-                f"Short title: {escape(_text(standard.short_title))}",
+                ff"{label('Short title')}: {escape(_text(standard.short_title))}",
                 subtitle_style,
             )
         )
@@ -244,18 +250,32 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
     story.append(HRFlowable(width="100%", thickness=1, color=PRIMARY))
     story.append(Spacer(1, 5))
 
+    if standard.certification_mandatory:
+        banner = Table([[Paragraph(escape(label("Mandatory Certification")), value_style), Paragraph(escape(_text(standard.certification_scheme)), value_style)]], colWidths=[75 * mm, 100 * mm])
+        banner.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#fef3c7")),
+            ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#f59e0b")),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 7),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ]))
+        story.append(banner)
+        story.append(Spacer(1, 5))
+
     # Overview
-    story.append(_section_title("Overview", section_style))
+    story.append(_section_title(label("Overview"), section_style))
     story.append(
         _metadata_table(
             [
-                ("Status", standard.status),
-                ("Department", standard.department_name or standard.department),
-                ("Department Alias", standard.department_alias),
-                ("Aspect", standard.aspect),
-                ("Domain", standard.domain),
-                ("Year", standard.year),
-                ("Language", standard.language),
+                (label("Status"), standard.status),
+                (label("Department"), standard.department_name or standard.department),
+                (label("Department Alias"), standard.department_alias),
+                (label("Aspect"), standard.aspect),
+                (label("Domain"), standard.domain),
+                (label("Year"), standard.year),
+                (label("Language"), standard.language),
             ],
             label_style,
             value_style,
@@ -263,14 +283,14 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
     )
 
     # Classification
-    story.append(_section_title("Classification", section_style))
+    story.append(_section_title(label("Classification"), section_style))
     story.append(
         _metadata_table(
             [
-                ("Group Classification", standard.group_classification),
-                ("Group", standard.group),
-                ("Sub Group", standard.sub_group),
-                ("Sub Sub Group", standard.sub_sub_group),
+                (label("Group Classification"), standard.group_classification),
+                (label("Group"), standard.group),
+                (label("Sub Group"), standard.sub_group),
+                (label("Sub Sub Group"), standard.sub_sub_group),
             ],
             label_style,
             value_style,
@@ -278,18 +298,18 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
     )
 
     # Publication and revision
-    story.append(_section_title("Publication, Validity & Revision", section_style))
+    story.append(_section_title(label("Publication, Validity & Revision"), section_style))
     story.append(
         _metadata_table(
             [
-                ("Published On", _date(standard.published_on)),
-                ("Valid Upto", _date(standard.valid_upto)),
-                ("Review On", _date(standard.review_on)),
-                ("Reaffirmation Year", standard.reaffirmation_year),
-                ("No. of Revision", standard.no_of_revision),
-                ("Amendment Count", standard.amendment_count),
-                ("Latest Version", standard.latest_version),
-                ("Standard Base", standard.standard_base),
+                (label("Published On"), _date(standard.published_on)),
+                (label("Valid Upto"), _date(standard.valid_upto)),
+                (label("Review On"), _date(standard.review_on)),
+                (label("Reaffirmation Year"), standard.reaffirmation_year),
+                (label("No. of Revision"), standard.no_of_revision),
+                (label("Amendment Count"), standard.amendment_count),
+                (label("Latest Version"), standard.latest_version),
+                (label("Standard Base"), standard.standard_base),
             ],
             label_style,
             value_style,
@@ -297,17 +317,17 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
     )
 
     # Technical and organization
-    story.append(_section_title("Technical & Organization", section_style))
+    story.append(_section_title(label("Technical & Organization"), section_style))
     story.append(
         _metadata_table(
             [
-                ("ICS Code", standard.ics_code),
-                ("Degree of Equivalence", standard.degree_of_equivalence),
-                ("Ministry", standard.ministry),
-                ("Committee", standard.committee_name),
-                ("Member Secretary", standard.member_secretary),
-                ("Certification", standard.certification),
-                ("QCO Gazette", standard.has_qco_gazette),
+                (label("ICS Code"), standard.ics_code),
+                (label("Degree of Equivalence"), standard.degree_of_equivalence),
+                (label("Ministry"), standard.ministry),
+                (label("Committee"), standard.committee_name),
+                (label("Member Secretary"), standard.member_secretary),
+                (label("Certification"), standard.certification),
+                (label("QCO Gazette"), standard.has_qco_gazette),
             ],
             label_style,
             value_style,
@@ -316,18 +336,18 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
 
     # Description
     if standard.description:
-        story.append(_section_title("Description", section_style))
+        story.append(_section_title(label("Description"), section_style))
         story.append(_paragraph(standard.description, body_style))
 
     # Scope
     if standard.scope:
-        story.append(_section_title("Scope", section_style))
+        story.append(_section_title(label("Scope"), section_style))
         story.append(_paragraph(standard.scope, body_style))
 
     # Requirements
     requirements = standard.requirements or []
     if requirements:
-        story.append(_section_title("Requirements", section_style))
+        story.append(_section_title(label("Requirements"), section_style))
         for index, requirement in enumerate(requirements, start=1):
             story.append(
                 Paragraph(
@@ -339,25 +359,25 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
     # Keywords
     keywords = standard.keywords or []
     if keywords:
-        story.append(_section_title("Keywords", section_style))
+        story.append(_section_title(label("Keywords"), section_style))
         story.append(_paragraph(", ".join(keywords), body_style))
 
     # SDG
     sdg_goals = _list_text(standard.sdg_goals)
     if sdg_goals:
-        story.append(_section_title("SDG Goals", section_style))
+        story.append(_section_title(label("SDG Goals"), section_style))
         story.append(_paragraph(", ".join(sdg_goals), body_style))
 
     # References
     reference_groups = [
-        ("Cross References", _list_text(standard.cross_references)),
-        ("Referenced By", _list_text(standard.referenced_by)),
-        ("Supersedes", _list_text(standard.supersedes)),
-        ("Superseded By", _list_text(standard.superseded_by)),
+        (label("Cross References"), _list_text(standard.cross_references)),
+        (label("Referenced By"), _list_text(standard.referenced_by)),
+        (label("Supersedes"), _list_text(standard.supersedes)),
+        (label("Superseded By"), _list_text(standard.superseded_by)),
     ]
 
     if any(values for _, values in reference_groups):
-        story.append(_section_title("References & Relationships", section_style))
+        story.append(_section_title(label("References & Relationships"), section_style))
         for label, values in reference_groups:
             if values:
                 story.append(
@@ -367,7 +387,7 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
 
     # Hindi / i18n
     if standard.title_hi or standard.scope_hi or standard.requirements_hi:
-        story.append(_section_title("Hindi / Internationalization", section_style))
+        story.append(_section_title(label("Hindi / Internationalization"), section_style))
 
         if standard.title_hi:
             story.append(Paragraph("<b>Hindi Title</b>", value_style))
@@ -383,15 +403,15 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
             story.append(_paragraph("; ".join(hindi_requirements), body_style))
 
     # Source
-    story.append(_section_title("Source Information", section_style))
+    story.append(_section_title(label("Source Information"), section_style))
     story.append(
         _metadata_table(
             [
-                ("Source Standard ID", standard.source_standard_id),
-                ("Source Standard Enc ID", standard.source_standard_enc_id),
-                ("Source Department ID", standard.source_department_id),
-                ("Source Committee ID", standard.source_committee_id),
-                ("Raw IS Status", standard.raw_is_status),
+                (label("Source Standard ID"), standard.source_standard_id),
+                (label("Source Standard Enc ID"), standard.source_standard_enc_id),
+                (label("Source Department ID"), standard.source_department_id),
+                (label("Source Committee ID"), standard.source_committee_id),
+                (label("Raw IS Status"), standard.raw_is_status),
             ],
             label_style,
             value_style,
@@ -400,13 +420,13 @@ def build_standard_pdf(standard: StandardDetail) -> tuple[bytes, str]:
 
     # Related standards
     if standard.related_standards:
-        story.append(_section_title("Related Standards", section_style))
+        story.append(_section_title(label("Related Standards"), section_style))
         related_rows = [
             [
-                Paragraph("IS Number", label_style),
-                Paragraph("Title", label_style),
-                Paragraph("Status", label_style),
-                Paragraph("Relationship", label_style),
+                Paragraph(label("IS Number"), label_style),
+                Paragraph(label("Title"), label_style),
+                Paragraph(label("Status"), label_style),
+                Paragraph(label("Relationship"), label_style),
             ]
         ]
 

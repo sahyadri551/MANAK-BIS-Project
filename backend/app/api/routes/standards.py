@@ -66,7 +66,7 @@ def download_standard_pdf(
     if not detail:
         raise HTTPException(status_code=404, detail="Standard not found")
 
-    pdf_bytes, filename = build_standard_pdf(detail)
+    pdf_bytes, filename = build_standard_pdf(detail, lang=lang)
 
     return Response(
         content=pdf_bytes,
