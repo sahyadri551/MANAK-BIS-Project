@@ -50,6 +50,8 @@ class RecommendationItem(BaseModel):
     no_of_revision: int = 0
     amendment_count: int = 0
     reaffirmation_year: int | None = None
+    certification_scheme: str = "NONE"
+    certification_mandatory: bool = False
     matched_requirements: list[str] = Field(default_factory=list)
     reason: str = ""
     evidence: list = Field(default_factory=list)  # type: ignore

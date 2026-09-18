@@ -12,6 +12,7 @@ from app.db.models.standard import Standard
 from app.db.repositories.standard_repository import StandardRepository
 from app.schemas.recommendation import RecommendationItem, RecommendRequest, RecommendResponse
 from app.services.allied_standards import build_allied_standards
+from app.services.certification import classify
 from app.services.localization import loc_aspect, loc_department, loc_title, req_map
 from app.services.query_translation import translate_query_to_english
 from app.services.search_service import SearchService
@@ -108,6 +109,8 @@ class RecommendationService:
                     no_of_revision=std.no_of_revision or 0,
                     amendment_count=std.amendment_count or 0,
                     reaffirmation_year=std.reaffirmation_year,
+                    certification_scheme=classify(std.certification, std.has_qco_gazette)[0],
+                    certification_mandatory=classify(std.certification, std.has_qco_gazette)[1],
                     matched_requirements=[rmap.get(matched_requirement, matched_requirement) for matched_requirement in matched],
                     reason=reason,
                     evidence=[],

@@ -11,6 +11,7 @@ from app.schemas.standard import (
     StatsOverview,
 )
 from app.services.allied_standards import build_allied_standards
+from app.services.certification import classify
 from app.services.localization import (
     loc_aspect,
     loc_department,
@@ -85,6 +86,8 @@ class StandardService:
             ministry=s.ministry,
             committee_name=s.committee_name,
             certification=s.certification,
+            certification_scheme=classify(s.certification, s.has_qco_gazette)[0],
+            certification_mandatory=classify(s.certification, s.has_qco_gazette)[1],
         )
 
     def list(self, lang: str = "en", **filters) -> list[StandardSummary]:
@@ -133,6 +136,8 @@ class StandardService:
             committee_name=standard.committee_name,
             member_secretary=standard.member_secretary,
             certification=standard.certification,
+            certification_scheme=classify(standard.certification, standard.has_qco_gazette)[0],
+            certification_mandatory=classify(standard.certification, standard.has_qco_gazette)[1],
             has_qco_gazette=standard.has_qco_gazette,
             sdg_goals=standard.sdg_goals or [],
             cross_references=standard.cross_references or [],
