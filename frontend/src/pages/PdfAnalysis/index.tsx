@@ -78,7 +78,7 @@ function AnalysisSummary({ summary, lang }: { summary: PdfAnalysisSummary; lang:
       {summary.pages.length > 0 && (
         <details className="group rounded-xl border border-hairline bg-surface-2/20">
           <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-300">{pdfCopy(lang, 'details')}</summary>
-          <div className="border-t border-hairline px-4 pb-4"><div className="divide-y divide-hairline">{summary.pages.map((page) => <div key={page.page} className="grid gap-2 py-3 md:grid-cols-[80px_100px_1fr]"><span className="text-xs font-semibold text-slate-400">{copy(lang, 'page')} {page.page}</span><span className="font-mono text-[11px] text-slate-600">{page.characters.toLocaleString()} {pdfCopy(lang, 'characters')}</span><span className="text-xs leading-5 text-slate-500">{page.preview}</span></div>)}</div></div>
+          <div className="border-t border-hairline px-4 pb-4"><div className="divide-y divide-hairline">{summary.pages.map((page) => <div key={page.page} className="grid gap-2 py-3 md:grid-cols-[80px_100px_1fr]"><span className="text-xs font-semibold text-slate-400">{pdfCopy(lang, 'page')} {page.page}</span><span className="font-mono text-[11px] text-slate-600">{page.characters.toLocaleString()} {pdfCopy(lang, 'characters')}</span><span className="text-xs leading-5 text-slate-500">{page.preview}</span></div>)}</div></div>
         </details>
       )}
     </div>
@@ -121,10 +121,10 @@ export default function PdfAnalysis() {
       setSimilarityMap(response.similarity_map ?? [])
       try { sessionStorage.setItem(PDF_STATE_KEY, JSON.stringify({ filters, summary: response.pdf_analysis ?? null, results: response.recommendations ?? [], similarityMap: response.similarity_map ?? [] })) } catch {}
       invalidateSearchHistory()
-      toast.success(`${response.recommendations.length} ${copy(lang, 'standardsMatched')}`)
+      toast.success(`${response.recommendations.length} ${pdfCopy(lang, 'standardsMatched')}`)
     } catch (error) {
       console.error(error)
-      toast.error(copy(lang, 'pdfFailed'))
+      toast.error(pdfCopy(lang, 'pdfFailed'))
     } finally {
       setLoading(false)
     }
@@ -132,11 +132,11 @@ export default function PdfAnalysis() {
 
   return (
     <div data-testid="pdf-analysis-page" className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">{copy(lang, 'pageLabel')}</p><h1 className="mt-2 font-display text-2xl font-bold text-slate-100">{copy(lang, 'title')}</h1><p className="mt-1 max-w-2xl text-sm text-slate-500">{copy(lang, 'description')}</p></div></div>
+      <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">{pdfCopy(lang, 'pageLabel')}</p><h1 className="mt-2 font-display text-2xl font-bold text-slate-100">{pdfCopy(lang, 'title')}</h1><p className="mt-1 max-w-2xl text-sm text-slate-500">{pdfCopy(lang, 'description')}</p></div></div>
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-        <div className="space-y-5"><div className="panel space-y-4 p-5"><div><h2 className="font-display text-sm font-semibold text-slate-200">{copy(lang, "source")}</h2><p className="mt-1 text-xs text-slate-600">{copy(lang, "sourceHint")}</p></div><PdfUploadZone file={file} onFileChange={setFile} onAnalyze={runAnalysis} analyzing={loading} /><FilterPanel value={filters} onChange={setFilters} /></div></div>
+        <div className="space-y-5"><div className="panel space-y-4 p-5"><div><h2 className="font-display text-sm font-semibold text-slate-200">{pdfCopy(lang, "source")}</h2><p className="mt-1 text-xs text-slate-600">{pdfCopy(lang, "sourceHint")}</p></div><PdfUploadZone file={file} onFileChange={setFile} onAnalyze={runAnalysis} analyzing={loading} /><FilterPanel value={filters} onChange={setFilters} /></div></div>
         <div className="min-w-0 space-y-5">
-          {loading ? <Loader label={t('form.matching')} /> : summary ? <><AnalysisSummary summary={summary} lang={lang} />{results.length > 0 && <SemanticMatchChart items={results} />}<div className="panel p-5"><div className="flex items-center justify-between gap-3"><div><h2 className="font-display text-lg font-semibold text-slate-100">{copy(lang, "recommended")}</h2><p className="mt-1 text-xs text-slate-500">{copy(lang, "recommendedDesc")}</p></div><span className="rounded-full border border-accent/20 bg-accent/5 px-2.5 py-1 font-mono text-xs text-accent">{results.length} {copy(lang, "matches")}</span></div><div className="mt-4"><ResultsList items={results} selectedIds={new Set()} onToggleCompare={() => undefined} returnTo="/pdf-analysis" /></div></div><SimilarityMap points={similarityMap} /></> : <div className="panel flex min-h-[420px] flex-col items-center justify-center p-8 text-center"><FileSearch className="h-10 w-10 text-accent/60" /><h2 className="mt-4 font-display text-xl font-semibold text-slate-200">{copy(lang, "ready")}</h2><p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{copy(lang, "readyDesc")}</p></div>}
+          {loading ? <Loader label={t('form.matching')} /> : summary ? <><AnalysisSummary summary={summary} lang={lang} />{results.length > 0 && <SemanticMatchChart items={results} />}<div className="panel p-5"><div className="flex items-center justify-between gap-3"><div><h2 className="font-display text-lg font-semibold text-slate-100">{pdfCopy(lang, "recommended")}</h2><p className="mt-1 text-xs text-slate-500">{pdfCopy(lang, "recommendedDesc")}</p></div><span className="rounded-full border border-accent/20 bg-accent/5 px-2.5 py-1 font-mono text-xs text-accent">{results.length} {pdfCopy(lang, "matches")}</span></div><div className="mt-4"><ResultsList items={results} selectedIds={new Set()} onToggleCompare={() => undefined} returnTo="/pdf-analysis" /></div></div><SimilarityMap points={similarityMap} /></> : <div className="panel flex min-h-[420px] flex-col items-center justify-center p-8 text-center"><FileSearch className="h-10 w-10 text-accent/60" /><h2 className="mt-4 font-display text-xl font-semibold text-slate-200">{pdfCopy(lang, "ready")}</h2><p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{pdfCopy(lang, "readyDesc")}</p></div>}
         </div>
       </div>
     </div>
