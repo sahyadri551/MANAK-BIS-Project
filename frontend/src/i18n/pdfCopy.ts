@@ -69,8 +69,4 @@ const EXTRA_COPY: Record<Lang, Record<string, string>> = {
 
 Object.entries(EXTRA_COPY).forEach(([lang, values]) => Object.assign(PDF_COPY[lang as Lang], values))
 
-function pdfCopy(lang: Lang, key: string): string {
-  return PDF_COPY[lang][key] ?? PDF_COPY.en[key] ?? key
-}
-
 export { PDF_COPY, pdfCopy }
