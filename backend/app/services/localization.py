@@ -106,7 +106,7 @@ def _from_i18n(std, lang: str, field: str):
 
 
 def loc_title(std, lang: str) -> str:
-    if lang == "hi":
+    if lang == "hi" and std.title_hi:
         return std.title_hi or std.title
     return _from_i18n(std, lang, "title") or std.title
 

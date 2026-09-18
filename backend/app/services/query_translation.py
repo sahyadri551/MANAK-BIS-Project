@@ -187,3 +187,52 @@ def translate_query_to_english(
     resolved_model = model
 
     return _cached_translate(query, resolved_model)
+
+_TRANSLATE_TO_LANG_PROMPT = (
+    "You are a precise technical translator. Translate the user's text into "
+    "{lang}. The text is about industrial/manufacturing standards — preserve "
+    "technical terms, material names, measurements, and standard numbers "
+    "exactly as-is. Return ONLY the translated text, no explanation, no "
+    "preamble, no quotation marks."
+)
+
+
+@lru_cache(maxsize=4096)
+def _cached_translate_to_lang(text: str, lang: str, model: str) -> str:
+    if not text or not text.strip():
+        return text
+    try:
+        import litellm
+        response = litellm.completion(
+            model=model,
+            messages=[
+                {"role": "system", "content": _TRANSLATE_TO_LANG_PROMPT.format(lang=lang)},
+                {"role": "user", "content": text},
+            ],
+            max_tokens=512,
+        )
+        translated = response.choices[0].message.content.strip()
+        return translated or text
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Translation to %s failed (%s: %s) — using original text.", lang, type(exc).__name__, exc)
+        return text
+
+
+def translate_text(text: str, lang: str, model: str | None = None) -> str:
+    """Translate arbitrary text INTO `lang` — any target language, not just
+    English. Used by scripts/translate_catalogue.py for bulk catalogue
+    translation. Kept separate from translate_query_to_english() above,
+    which has its own fixed English-only system prompt and runs at request
+    time for search queries, not bulk content translation — don't merge these
+    two, they serve different call sites with different prompts.
+    """
+    if lang == "en":
+        return text
+    resolved_model = model
+    if resolved_model is None:
+        try:
+            from app.core.config import settings
+            resolved_model = settings.translation_model
+        except Exception:  # noqa: BLE001
+            resolved_model = "gemini/gemini-1.5-flash"
+    return _cached_translate_to_lang(text, lang, resolved_model)
