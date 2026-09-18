@@ -242,7 +242,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     if standard.short_title:
         story.append(
             Paragraph(
-                ff"{label('Short title')}: {escape(_text(standard.short_title))}",
+                f"{label('Short title')}: {escape(_text(standard.short_title))}",
                 subtitle_style,
             )
         )
