@@ -52,7 +52,7 @@ export default function Recommendation() {
     setRequestId(null)
     setLoading(true)
     try {
-      const res = await getRecommendations({ query: q, document_name: null, filters })
+      const res = await getRecommendations({ query: q, document_name: null, filters }, lang)
       setResults(res.recommendations)
       setSelectedIds(new Set())
       setSimilarityMap(res.similarity_map ?? [])

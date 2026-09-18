@@ -20,7 +20,7 @@ export default function SearchStandards() {
   useEffect(() => {
     let active = true
     const search = term.trim()
-    const params = search ? { search, limit: 100 } : { limit: INITIAL_LIMIT }
+    const params = search ? { search, limit: 100, lang } : { limit: INITIAL_LIMIT, lang }
     const cached = getCachedStandards(params)
 
     if (cached) {

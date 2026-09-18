@@ -21,4 +21,5 @@ export type ListParams = {
   domain?: string
   search?: string
   limit?: number
+  lang?: string
 }

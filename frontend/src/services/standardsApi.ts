@@ -29,6 +29,7 @@ function standardsCacheKey(params: ListParams): string {
     domain: params.domain ?? null,
     search: params.search ?? null,
     limit: params.limit ?? null,
+    lang: params.lang ?? null,
   })
 }
 
@@ -69,13 +70,13 @@ export function invalidateStandards(): void {
   standardsCache.clear()
 }
 
-export async function getStandard(id: number | string): Promise<StandardDetail> {
-  const { data } = await api.get(`/standards/${id}`)
+export async function getStandard(id: number | string, lang: string): Promise<StandardDetail> {
+  const { data } = await api.get(`/standards/${id}`, { params: { lang } })
   return data
 }
 
-export async function downloadStandardPdf(id: number | string): Promise<void> {
-  const response = await api.get(`/standards/${id}/pdf`, { responseType: 'blob' })
+export async function downloadStandardPdf(id: number | string, lang: string): Promise<void> {
+  const response = await api.get(`/standards/${id}/pdf`, { responseType: 'blob', params: { lang } })
   const blob = new Blob([response.data], { type: 'application/pdf' })
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -87,10 +88,10 @@ export async function downloadStandardPdf(id: number | string): Promise<void> {
   window.URL.revokeObjectURL(url)
 }
 
-async function refreshStats(): Promise<StatsOverview> {
+async function refreshStats(lang: string): Promise<StatsOverview> {
   if (statsRequest) return statsRequest
   statsRequest = api
-    .get('/standards/stats/overview')
+    .get('/standards/stats/overview', { params: { lang } })
     .then(({ data }) => {
       statsCache = { data, fetchedAt: Date.now() }
       return data as StatsOverview
@@ -105,14 +106,14 @@ export function getCachedStats(): StatsOverview | null {
   return statsCache?.data ?? null
 }
 
-export async function getStats(options: { force?: boolean } = {}): Promise<StatsOverview> {
+export async function getStats(lang: string, options: { force?: boolean } = {}): Promise<StatsOverview> {
   const cached = statsCache
   if (!options.force && cached) {
     if (Date.now() - cached.fetchedAt < CACHE_TTL) return cached.data
-    void refreshStats()
+    void refreshStats(lang)
     return cached.data
   }
-  return refreshStats()
+  return refreshStats(lang)
 }
 
 async function refreshSearchHistory(limit: number): Promise<SearchHistoryEntry[]> {
@@ -149,7 +150,7 @@ export function invalidateSearchHistory(): void {
   historyCache.clear()
 }
 
-export async function getFilterOptions(): Promise<FilterOptions> {
-  const { data } = await api.get('/standards/meta/filters')
+export async function getFilterOptions(lang: string): Promise<FilterOptions> {
+  const { data } = await api.get('/standards/meta/filters', { params: { lang } })
   return data
 }

@@ -91,7 +91,7 @@ export default function PdfAnalysis() {
     setResults([])
     setSimilarityMap([])
     try {
-      const response = await analyzePdf(file, filters)
+      const response = await analyzePdf(file, filters, lang)
       setSummary(response.pdf_analysis ?? null)
       setResults(response.recommendations ?? [])
       setSimilarityMap(response.similarity_map ?? [])

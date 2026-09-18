@@ -100,12 +100,12 @@ export default function StandardDetails() {
   useEffect(() => {
     setLoading(true)
     setNotFound(false)
-    getStandard(id!).then(setStandard).catch(() => setNotFound(true)).finally(() => setLoading(false))
+    getStandard(id!, lang).then(setStandard).catch(() => setNotFound(true)).finally(() => setLoading(false))
   }, [id, lang])
 
   async function handleDownloadPdf() {
     if (!id || downloading) return
-    try { setDownloading(true); await downloadStandardPdf(id) } catch (error) { console.error('Failed to generate PDF report', error) } finally { setDownloading(false) }
+    try { setDownloading(true); await downloadStandardPdf(id, lang) } catch (error) { console.error('Failed to generate PDF report', error) } finally { setDownloading(false) }
   }
 
   if (loading) return <Loader />

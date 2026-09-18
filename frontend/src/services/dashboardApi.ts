@@ -21,7 +21,7 @@ export interface DashboardData {
   ai_performance: { metric: string; value: number | null }[]
 }
 
-export async function getDashboard(): Promise<DashboardData> {
-  const { data } = await api.get('/dashboard')
+export async function getDashboard(lang: string): Promise<DashboardData> {
+  const { data } = await api.get('/dashboard', { params: { lang } })
   return data
 }
