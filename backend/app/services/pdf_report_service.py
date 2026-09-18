@@ -26,6 +26,13 @@ from reportlab.platypus import (
 from app.schemas.standard import StandardDetail
 from app.services.pdf_labels import PDF_LABELS
 
+import logging
+logger = logging.getLogger(__name__)
+FONTS_DIR = Path(__file__).resolve().parent.parent / "assets" / "fonts"
+_FONT_FILES: dict[str, tuple[str, str]] = {
+    "hi": ("NotoSansDevanagari-Regular.ttf", "NotoSansDevanagari-Bold.ttf"),
+    "mr": ("NotoSansDevanagari-Regular.ttf", "NotoSansDevanagari-Bold.ttf"),
+}
 
 PRIMARY = colors.HexColor("#2563eb")
 DARK = colors.HexColor("#111827")
@@ -35,41 +42,38 @@ LIGHT = colors.HexColor("#f8fafc")
 WHITE = colors.white
 
 def _pdf_font_family(lang: str) -> tuple[str, str]:
-    """Return a Unicode-capable font family for the requested PDF language."""
-    if lang != "hi":
+    """Unicode-capable font family for the requested PDF language.
+
+    Falls back to Helvetica (Latin-only) on any failure instead of raising —
+    a PDF with boxes for a few labels is recoverable, a 500 error isn't.
+    """
+    files = _FONT_FILES.get(lang)
+    if not files:
         return "Helvetica", "Helvetica-Bold"
 
-    candidates = [
-        (Path(r"C:\Windows\Fonts\Nirmala.ttf"), Path(r"C:\Windows\Fonts\NirmalaB.ttf")),
-        (
-            Path("/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf"),
-            Path("/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf"),
-        ),
-        (
-            Path("/usr/share/fonts/truetype/lohit-devanagari/Lohit-Devanagari.ttf"),
-            Path("/usr/share/fonts/truetype/lohit-devanagari/Lohit-Devanagari.ttf"),
-        ),
-    ]
+    regular_file, bold_file = files
+    regular_path = FONTS_DIR / regular_file
+    bold_path = FONTS_DIR / bold_file
 
-    for regular_path, bold_path in candidates:
-        if not regular_path.exists():
-            continue
-        regular_name = "BISDevanagari"
-        bold_name = "BISDevanagariBold"
+    if not regular_path.exists():
+        logger.warning(
+            "PDF font missing for lang=%s at %s — falling back to Helvetica "
+            "(Devanagari text will not render correctly). Download the font "
+            "from Google Fonts and place it at that path.",
+            lang, regular_path,
+        )
+        return "Helvetica", "Helvetica-Bold"
+
+    regular_name, bold_name = f"BIS-{lang}", f"BIS-{lang}-Bold"
+    try:
         if regular_name not in pdfmetrics.getRegisteredFontNames():
             pdfmetrics.registerFont(TTFont(regular_name, str(regular_path)))
         if bold_name not in pdfmetrics.getRegisteredFontNames():
-            pdfmetrics.registerFont(
-                TTFont(bold_name, str(bold_path if bold_path.exists() else regular_path))
-            )
+            pdfmetrics.registerFont(TTFont(bold_name, str(bold_path if bold_path.exists() else regular_path)))
         return regular_name, bold_name
-
-    raise RuntimeError(
-        "Hindi PDF generation requires a Devanagari Unicode font. "
-        "Install Nirmala UI (Windows) or Noto Sans Devanagari (Linux)."
-    )
-
-
+    except Exception:
+        logger.exception("Failed to register PDF font for lang=%s", lang)
+        return "Helvetica", "Helvetica-Bold"
 def _text(value: object, default: str = "-") -> str:
     if value is None or value == "":
         return default
@@ -199,7 +203,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     number_style = ParagraphStyle(
         "StandardNumber",
         parent=styles["Normal"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=11,
         leading=14,
         textColor=PRIMARY,
@@ -219,7 +223,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     section_style = ParagraphStyle(
         "Section",
         parent=styles["Heading2"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=11.5,
         leading=14,
         textColor=DARK,
@@ -230,7 +234,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     label_style = ParagraphStyle(
         "Label",
         parent=styles["Normal"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=7.5,
         leading=10,
         textColor=MUTED,
@@ -239,7 +243,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     value_style = ParagraphStyle(
         "Value",
         parent=styles["Normal"],
-        fontName="Helvetica",
+        fontName=font_regular,
         fontSize=8.5,
         leading=12,
         textColor=DARK,
@@ -248,7 +252,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     body_style = ParagraphStyle(
         "Body",
         parent=styles["BodyText"],
-        fontName="Helvetica",
+        fontName=font_regular,
         fontSize=8.5,
         leading=13,
         textColor=DARK,
@@ -258,7 +262,7 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
     small_style = ParagraphStyle(
         "Small",
         parent=styles["BodyText"],
-        fontName="Helvetica",
+        fontName=font_regular,
         fontSize=7.5,
         leading=11,
         textColor=MUTED,
