@@ -378,10 +378,10 @@ def build_standard_pdf(standard: StandardDetail, lang: str = "en") -> tuple[byte
 
     if any(values for _, values in reference_groups):
         story.append(_section_title(label("References & Relationships"), section_style))
-        for label, values in reference_groups:
+        for group_label, values in reference_groups:
             if values:
                 story.append(
-                    Paragraph(f"<b>{escape(label)}</b>", value_style)
+                    Paragraph(f"<b>{escape(group_label)}</b>", value_style)
                 )
                 story.append(_paragraph("; ".join(values), body_style))
 
