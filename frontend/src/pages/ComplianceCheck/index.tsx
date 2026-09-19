@@ -35,6 +35,12 @@ export default function ComplianceCheck() {
     }
   }, [term, lang, selected])
 
+  function startNewSearch() {
+    setSelected(null)
+    setResults([])
+    setChecked({})
+  }
+
   async function choose(standard: StandardSummary) {
     setSelected(null)
     setResults([])
@@ -68,10 +74,26 @@ export default function ComplianceCheck() {
             id="compliance-search"
             data-testid="compliance-search-input"
             value={term}
-            onChange={(event) => setTerm(event.target.value)}
+            onChange={(event) => {
+              setTerm(event.target.value)
+              if (selected) {
+                setSelected(null)
+                setResults([])
+              }
+            }}
             placeholder={t('compliance.searchPlaceholder')}
-            className="field pl-9"
+            className="field pl-9 pr-12"
           />
+          <button
+            type="button"
+            data-testid="compliance-search-button"
+            onClick={startNewSearch}
+            aria-label={t('compliance.searchButton')}
+            title={t('compliance.searchButton')}
+            className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-accent/10 hover:text-accent"
+          >
+            <Search className="h-4 w-4" />
+          </button>
         </div>
         {term.trim() && results.length > 0 && !selected && (
           <div className="mt-3 max-w-2xl overflow-hidden rounded-lg border border-hairline bg-surface-2/50">
