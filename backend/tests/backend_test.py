@@ -3,6 +3,8 @@
 import os
 import pytest
 import requests
+from pypdf import PdfReader
+from io import BytesIO
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:8001").rstrip("/")
 API = f"{BASE_URL}/api"
@@ -291,3 +293,139 @@ def test_recommend_lang_ta_bn(client, lang, checker):
             assert checker(" ".join(item if isinstance(item, str) else str(item) for item in matched))
         assert not checker(recommendation["is_number"])
         assert not checker(recommendation["status"])
+
+# ============================================================
+# Regression tests: certification classification (Step 2)
+# ============================================================
+
+def test_certification_classify_unit():
+    """Pure unit test of classify() — no server needed, tests the
+    decision logic directly against representative inputs."""
+    from app.services.certification import classify
+
+    assert classify(None, None) == ("NONE", False)
+    assert classify("", "") == ("NONE", False)
+
+    scheme, mandatory = classify("ISI Mark under QCO", None)
+    assert scheme == "ISI_MANDATORY"
+    assert mandatory is True
+
+    scheme, mandatory = classify("ISI Mark (voluntary)", None)
+    assert scheme == "ISI_VOLUNTARY"
+    assert mandatory is False
+
+    scheme, mandatory = classify("Compulsory Registration Scheme", None)
+    assert scheme == "CRS"
+    assert mandatory is True
+
+    scheme, mandatory = classify("Hallmarking required", None)
+    assert scheme == "HALLMARKING"
+    assert mandatory is True
+
+    # Internal consistency invariant: mandatory=True must never pair with NONE.
+    for cert_text in ("ISI", "CRS", "hallmark", "QCO", None, ""):
+        scheme, mandatory = classify(cert_text, None)
+        if mandatory:
+            assert scheme != "NONE"
+
+
+def _assert_certification_shape(item: dict):
+    assert "certification_scheme" in item
+    assert "certification_mandatory" in item
+    assert item["certification_scheme"] in ("ISI_MANDATORY", "ISI_VOLUNTARY", "CRS", "HALLMARKING", "NONE")
+    assert isinstance(item["certification_mandatory"], bool)
+    if item["certification_mandatory"]:
+        assert item["certification_scheme"] != "NONE"
+
+
+def test_certification_fields_on_standards_list(client):
+    response = client.get(f"{API}/standards", params={"limit": 50})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) > 0
+    for item in data:
+        _assert_certification_shape(item)
+
+
+def test_certification_fields_on_recommendations(client):
+    payload = {
+        "query": "43 grade cement for RCC 43 MPa",
+        "document_name": None,
+        "filters": {"status": None, "department": None, "aspect": None},
+    }
+    response = client.post(f"{API}/recommend", json=payload)
+    assert response.status_code == 200
+    recommendations = response.json()["recommendations"]
+    assert len(recommendations) > 0
+    for item in recommendations:
+        _assert_certification_shape(item)
+
+
+# ============================================================
+# Regression test: related_standards vs allied_standards (Step 1)
+# ============================================================
+
+def test_related_and_allied_standards_are_not_duplicated(client):
+    """related_standards must stay the plain relationship list (no category);
+    allied_standards is the categorized one. This is the exact bug where both
+    fields were being set to the same categorized list."""
+    response = client.get(f"{API}/standards", params={"limit": 200})
+    assert response.status_code == 200
+    candidates = response.json()
+
+    checked_one_with_data = False
+    for summary in candidates[:60]:
+        detail_response = client.get(f"{API}/standards/{summary['id']}")
+        assert detail_response.status_code == 200
+        detail = detail_response.json()
+
+        related = detail.get("related_standards", [])
+        allied = detail.get("allied_standards", [])
+
+        # related_standards must never carry a category — that's the signal
+        # it's been overwritten with the categorized allied list again.
+        for entry in related:
+            assert entry.get("category") is None, (
+                f"related_standards entry {entry.get('is_number')} has a "
+                f"category — related_standards is being duplicated from "
+                f"allied_standards again."
+            )
+
+        if allied:
+            checked_one_with_data = True
+            # allied_standards existing at all should mean at least one
+            # entry actually carries a category (that's the whole point).
+            assert any(entry.get("category") is not None for entry in allied)
+
+    if not checked_one_with_data:
+        pytest.skip("No standard in the first 60 checked has allied_standards data to validate against.")
+
+
+# ============================================================
+# Regression test: PDF localizes by lang (Step 4)
+# ============================================================
+
+DEV_RE_PDF = __import__("re").compile(r"[\u0900-\u097F]")
+
+
+def test_pdf_report_differs_by_language(client):
+    listing = client.get(f"{API}/standards", params={"limit": 1})
+    assert listing.status_code == 200
+    standard_id = listing.json()[0]["id"]
+
+    en_response = client.get(f"{API}/standards/{standard_id}/pdf", params={"lang": "en"})
+    hi_response = client.get(f"{API}/standards/{standard_id}/pdf", params={"lang": "hi"})
+
+    assert en_response.status_code == 200
+    assert hi_response.status_code == 200
+    assert en_response.headers["content-type"] == "application/pdf"
+    assert hi_response.headers["content-type"] == "application/pdf"
+
+    # Different language must not silently produce byte-identical output.
+    assert en_response.content != hi_response.content
+
+    en_text = "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(en_response.content)).pages)
+    hi_text = "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(hi_response.content)).pages)
+
+    assert not DEV_RE_PDF.search(en_text), "English PDF should not contain Devanagari script"
+    assert DEV_RE_PDF.search(hi_text), "Hindi PDF should contain Devanagari script in its section labels"
