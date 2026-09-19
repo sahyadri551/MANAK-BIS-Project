@@ -1,4 +1,5 @@
 import type { Lang } from './index'
+import { GROUP_LABELS, MINISTRY_LABELS } from './groupMinistryLabels'
 
 type Map = Record<string, Record<string, string>>
 
@@ -434,8 +435,11 @@ const STATUS: Map = {
 }
 
 const MAPS = { statuses: STATUS, departments: DEPARTMENT, aspects: ASPECT }
+export type LabelKind = 'statuses' | 'departments' | 'aspects' | 'groups' | 'ministries'
 
 // Localized label for a value while the underlying value stays English (matching intact).
-export function labelFor(kind: 'statuses' | 'departments' | 'aspects', value: string, lang: Lang): string {
+export function labelFor(kind: LabelKind, value: string, lang: Lang): string {
+  if (kind === 'groups') return GROUP_LABELS[value]?.[lang] ?? value
+  if (kind === 'ministries') return MINISTRY_LABELS[value]?.[lang] ?? value
   return MAPS[kind]?.[lang]?.[value] ?? value
 }

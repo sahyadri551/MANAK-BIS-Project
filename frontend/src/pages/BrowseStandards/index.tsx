@@ -17,6 +17,8 @@ const ICONS = {
   ministry: Network,
 } as const
 
+const KIND = { department: 'departments', aspect: 'aspects', group: 'groups', ministry: 'ministries' } as const
+
 export default function BrowseStandards() {
   const { t, lang } = useI18n()
   const [data, setData] = useState<Record<string, Item[]>>({})
@@ -31,11 +33,14 @@ export default function BrowseStandards() {
     return () => { active = false }
   }, [lang])
 
+  const sortLocalized = (items: Item[], kind: 'groups' | 'ministries') =>
+  [...items].sort((a, b) => labelFor(kind, a.value, lang).localeCompare(labelFor(kind, b.value, lang), lang))
+
   const dimensions: Dimension[] = [
     { key: 'department', title: t('browse.department'), items: data.departments ?? [], icon: ICONS.department },
     { key: 'aspect', title: t('browse.aspect'), items: data.aspects ?? [], icon: ICONS.aspect },
-    { key: 'group', title: t('browse.group'), items: data.groups ?? [], icon: ICONS.group },
-    { key: 'ministry', title: t('browse.ministry'), items: data.ministries ?? [], icon: ICONS.ministry },
+    { key: 'group', title: t('browse.group'), items: sortLocalized(data.groups ?? [], 'groups'), icon: ICONS.group },
+    { key: 'ministry', title: t('browse.ministry'), items: sortLocalized(data.ministries ?? [], 'ministries'), icon: ICONS.ministry },
   ]
 
   return (
@@ -66,7 +71,7 @@ export default function BrowseStandards() {
                   data-testid={`browse-${key}-${item.value}`}
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-200 group-hover:text-accent">{key === 'department' || key === 'aspect' ? labelFor(key === 'department' ? 'departments' : 'aspects', item.label, lang) : item.label}</p>
+                    <p className="truncate text-sm font-medium text-slate-200 group-hover:text-accent">{labelFor(KIND[key], key === 'group' || key === 'ministry' ? item.value : item.label, lang)}</p>
                     <p className="mt-1 text-xs text-slate-500">{item.count.toLocaleString()} {t('browse.standards')}</p>
                   </div>
                   <ArrowRight className="h-4 w-4 shrink-0 text-slate-600 group-hover:text-accent" />
