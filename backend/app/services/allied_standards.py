@@ -31,6 +31,19 @@ def _category_from_aspect(aspect: str | None) -> AlliedStandardCategory | None:
     return _ASPECT_CATEGORIES.get(aspect.strip().lower())
 
 
+def category_for_relationship(target: Standard, relationship_type: str) -> AlliedStandardCategory:
+    """Return one stable category for a relationship target.
+
+    Explicit supersession relationships take precedence. Other relationships
+    use the target's aspect, with normative_reference as the safe fallback.
+    """
+    if relationship_type == "supersedes":
+        return "supersedes"
+    if relationship_type == "superseded_by":
+        return "superseded_by"
+    return _category_from_aspect(target.aspect) or "normative_reference"
+
+
 def _normalise_is_numbers(values: Iterable[object] | None) -> list[str]:
     result: list[str] = []
     seen: set[str] = set()
@@ -80,11 +93,6 @@ def build_allied_standards(
     grouped: OrderedDict[str, list[RelatedStandard]] = OrderedDict()
 
     rels = relationships if relationships is not None else repo.related(standard.id)
-    relation_categories: dict[str, AlliedStandardCategory] = {
-        "supersedes": "supersedes",
-        "superseded_by": "superseded_by",
-    }
-
     json_groups: list[tuple[str, AlliedStandardCategory, list[object]]] = [
         ("cross_references", "normative_reference", standard.cross_references or []),
         ("referenced_by", "normative_reference", standard.referenced_by or []),
@@ -115,9 +123,7 @@ def build_allied_standards(
             _add_target(grouped, target, category, relationship_type, lang)
 
     for target, relationship_type in rels:
-        category = relation_categories.get(relationship_type)
-        if category is None:
-            category = _category_from_aspect(target.aspect) or "normative_reference"
+        category = category_for_relationship(target, relationship_type)
         key = (target.id, category)
         if key in seen:
             continue

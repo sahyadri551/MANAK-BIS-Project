@@ -10,7 +10,7 @@ from app.schemas.standard import (
     StandardSummary,
     StatsOverview,
 )
-from app.services.allied_standards import build_allied_standards
+from app.services.allied_standards import build_allied_standards, category_for_relationship
 from app.services.certification import classify
 from app.services.localization import (
     loc_aspect,
@@ -26,29 +26,7 @@ def to_related(
     rel_type: str,
     lang: str = "en",
 ) -> RelatedStandard:
-    category = None
-    relationship_category = {
-        "supersedes": "supersedes",
-        "superseded_by": "superseded_by",
-    }
-    if rel_type in relationship_category:
-        category = relationship_category[rel_type]
-    else:
-        aspect = (standard.aspect or "").strip().lower()
-        category = {
-            "methods of test": "test_method",
-            "method of test": "test_method",
-            "test method": "test_method",
-            "test methods": "test_method",
-            "terminology": "terminology",
-            "safety standard": "safety",
-            "safety": "safety",
-            "code of practice": "installation",
-            "installation": "installation",
-            "product specification": "product_spec",
-            "product standard": "product_spec",
-            "product spec": "product_spec",
-        }.get(aspect, "normative_reference")
+    category = category_for_relationship(standard, rel_type)
     return RelatedStandard(
         id=standard.id,
         is_number=standard.is_number,

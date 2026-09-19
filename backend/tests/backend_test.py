@@ -365,6 +365,32 @@ def test_certification_fields_on_recommendations(client):
 # Regression test: related_standards vs allied_standards (Step 1)
 # ============================================================
 
+def test_allied_standard_categories_are_stable(client):
+    """Allied categories must come from the shared categorization rules and
+    supersession relationships must not be downgraded to normative_reference."""
+    response = client.get(f"{API}/standards", params={"limit": 200})
+    assert response.status_code == 200
+
+    saw_categorized = False
+    for summary in response.json():
+        detail_response = client.get(f"{API}/standards/{summary['id']}")
+        assert detail_response.status_code == 200
+        detail = detail_response.json()
+        for item in detail.get("allied_standards", []):
+            category = item.get("category")
+            assert category in {
+                "normative_reference", "test_method", "terminology", "safety",
+                "installation", "product_spec", "supersedes", "superseded_by",
+            }
+            saw_categorized = True
+            if item.get("relationship_type") == "supersedes":
+                assert category == "supersedes"
+            elif item.get("relationship_type") == "superseded_by":
+                assert category == "superseded_by"
+
+    assert saw_categorized
+
+
 def test_related_and_allied_standards_are_not_duplicated(client):
     """related_standards must stay the plain relationship list (no category);
     allied_standards is the categorized one. This is the exact bug where both

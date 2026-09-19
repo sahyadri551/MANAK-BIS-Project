@@ -69,9 +69,15 @@ const ALLIED_GROUPS: Array<{ key: AlliedStandardCategory; title: string }> = [
 
 function AlliedStandards({ standards }: { standards: RelatedStandard[] }) {
   const groups = ALLIED_GROUPS.map(({ key, title }) => ({ key, title, items: standards.filter((item) => item.category === key) })).filter((group) => group.items.length > 0)
-  if (!groups.length) return null
+  const uncategorized = standards.filter((item) => !item.category)
+  if (!groups.length && !uncategorized.length) return null
 
-  return <Section icon={Network} title="Allied / Normative Standards"><div className="space-y-8">{groups.map((group) => <div key={group.key}><div className="mb-3 flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-200">{group.title}</h3><span className="rounded-full border border-hairline bg-surface-2 px-2 py-0.5 font-mono text-[10px] text-slate-500">{group.items.length}</span></div><AlliedGroupCards items={group.items} groupKey={group.key} /></div>)}</div></Section>
+  return <Section icon={Network} title="Allied / Normative Standards">
+    <div className="space-y-8">
+      {groups.map((group) => <div key={group.key}><div className="mb-3 flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-200">{group.title}</h3><span className="rounded-full border border-hairline bg-surface-2 px-2 py-0.5 font-mono text-[10px] text-slate-500">{group.items.length}</span></div><AlliedGroupCards items={group.items} groupKey={group.key} /></div>)}
+      {uncategorized.length > 0 && <div><div className="mb-3 flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-200">Other References</h3><span className="rounded-full border border-hairline bg-surface-2 px-2 py-0.5 font-mono text-[10px] text-slate-500">{uncategorized.length}</span></div><AlliedGroupCards items={uncategorized} groupKey="normative_reference" /></div>}
+    </div>
+  </Section>
 }
 
 function AlliedGroupCards({ items, groupKey }: { items: RelatedStandard[]; groupKey: AlliedStandardCategory }) {
