@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     database_url: str =""
     cors_origins: str = "*"
     recommendation_provider: str = "ml"
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
     max_recommendations: int = 10
     log_level: str = "INFO"
     # Translation model used by query_translation.py
