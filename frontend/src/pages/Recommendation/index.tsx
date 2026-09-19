@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { SlidersHorizontal } from 'lucide-react'
 import { SpecForm } from '../../components/recommendation/SpecForm'
@@ -10,7 +10,6 @@ import { getRecommendations } from '../../services/recommendationApi'
 import { invalidateSearchHistory } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import type { RecommendationFilters, RecommendationItem, SimilarityMapPoint } from '../../types/recommendation'
-import { ComparisonPanel } from '../../components/recommendation/ComparisonPanel'
 import { SimilarityMap } from '../../components/recommendation/SimilarityMap'
 import { SemanticMatchChart } from '../../components/recommendation/SemanticMatchChart'
 
@@ -21,6 +20,7 @@ type SavedRecommendationState = { query: string; filters: RecommendationFilters;
 
 export default function Recommendation() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { t, lang } = useI18n()
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState<RecommendationFilters>(NO_FILTERS)
@@ -122,9 +122,8 @@ export default function Recommendation() {
         ) : (
           <div className="space-y-4">
             <SemanticMatchChart items={results} />
-            <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-lg font-semibold text-slate-100">{results.length} {t('results.count')}</h2><div className="flex items-center gap-3">{selectedIds.size >= 2 && <button type="button" onClick={() => document.getElementById('comparison-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20">Compare Selected ({selectedIds.size})</button>}{requestId && <span className="font-mono text-[11px] text-slate-600">req {requestId.slice(0, 8)}</span>}</div></div>
+            <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-lg font-semibold text-slate-100">{results.length} {t('results.count')}</h2><div className="flex items-center gap-3">{selectedIds.size >= 2 && <button type="button" onClick={() => navigate(`/compare-standards?ids=${Array.from(selectedIds).join(',')}`)} className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20">Compare Selected ({selectedIds.size})</button>}{requestId && <span className="font-mono text-[11px] text-slate-600">req {requestId.slice(0, 8)}</span>}</div></div>
             <ResultsList items={results} selectedIds={selectedIds} onToggleCompare={toggleCompare} />
-            {selectedIds.size >= 2 && <ComparisonPanel items={results.filter((item) => selectedIds.has(item.standard_id))} onRemove={(standardId) => setSelectedIds((current) => { const next = new Set(current); next.delete(standardId); return next })} onClear={() => setSelectedIds(new Set())} />}
           </div>
         )}
         <SimilarityMap points={similarityMap} />
