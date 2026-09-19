@@ -151,6 +151,26 @@ class StandardService:
             by_department=self.repo.count_grouped(Standard.department),
         )
 
+    def browse_options(self, lang: str = "en"):
+        def items(column, localizer=None):
+            merged: dict[str, dict[str, object]] = {}
+            for value, count in self.repo.count_grouped(column).items():
+                if value == "unknown" or not value:
+                    continue
+                raw = str(value).strip()
+                key = raw.casefold()
+                entry = merged.setdefault(key, {"value": raw, "label": localizer(raw) if localizer else raw, "count": 0})
+                entry["count"] = int(entry["count"]) + int(count)
+            return sorted(merged.values(), key=lambda item: str(item["label"]).casefold())
+
+        from app.db.models.standard import Standard as _Standard
+        return {
+            "departments": items(_Standard.department_name, lambda value: loc_department(value, lang)),
+            "aspects": items(_Standard.aspect, lambda value: loc_aspect(value, lang)),
+            "groups": items(_Standard.group),
+            "ministries": items(_Standard.ministry),
+        }
+
     def filter_options(self) -> FilterOptions:
         return FilterOptions(
             statuses=self.repo.distinct_values(Standard.status),

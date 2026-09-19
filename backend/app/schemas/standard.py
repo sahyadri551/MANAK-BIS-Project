@@ -139,6 +139,19 @@ class StatsOverview(BaseModel):
     by_department: dict[str, int]
 
 
+class BrowseItem(BaseModel):
+    value: str
+    label: str
+    count: int
+
+
+class BrowseResponse(BaseModel):
+    departments: list[BrowseItem] = Field(default_factory=list)
+    aspects: list[BrowseItem] = Field(default_factory=list)
+    groups: list[BrowseItem] = Field(default_factory=list)
+    ministries: list[BrowseItem] = Field(default_factory=list)
+
+
 class FilterOptions(BaseModel):
     statuses: list[str]
     departments: list[str]

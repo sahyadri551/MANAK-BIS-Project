@@ -1,6 +1,7 @@
 import { api } from './api'
 import type { ListParams, SearchHistoryEntry } from '../types/api'
 import type {
+  BrowseResponse,
   FilterOptions,
   StandardDetail,
   StandardSummary,
@@ -27,6 +28,8 @@ function standardsCacheKey(params: ListParams): string {
     department: params.department ?? null,
     aspect: params.aspect ?? null,
     domain: params.domain ?? null,
+    group: params.group ?? null,
+    ministry: params.ministry ?? null,
     search: params.search ?? null,
     limit: params.limit ?? null,
     lang: params.lang ?? null,
@@ -154,5 +157,10 @@ export function invalidateSearchHistory(): void {
 
 export async function getFilterOptions(lang: string): Promise<FilterOptions> {
   const { data } = await api.get('/standards/meta/filters', { params: { lang } })
+  return data
+}
+
+export async function getBrowseOptions(lang: string): Promise<BrowseResponse> {
+  const { data } = await api.get('/standards/meta/browse', { params: { lang } })
   return data
 }

@@ -19,6 +19,8 @@ export type ListParams = {
   department?: string
   aspect?: string
   domain?: string
+  group?: string
+  ministry?: string
   search?: string
   limit?: number
   lang?: string

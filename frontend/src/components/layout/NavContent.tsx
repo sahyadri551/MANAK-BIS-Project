@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { FileSearch, History, LayoutDashboard, LayoutGrid, Plus, Search, ShieldCheck } from 'lucide-react'
+import { FileSearch, History, LayoutDashboard, Plus, Search, ShieldCheck } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
 

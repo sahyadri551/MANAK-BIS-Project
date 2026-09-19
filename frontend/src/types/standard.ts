@@ -112,3 +112,17 @@ export interface FilterOptions {
   ministries: string[]
   committees: string[]
 }
+
+
+export interface BrowseItem {
+  value: string
+  label: string
+  count: number
+}
+
+export interface BrowseResponse {
+  departments: BrowseItem[]
+  aspects: BrowseItem[]
+  groups: BrowseItem[]
+  ministries: BrowseItem[]
+}

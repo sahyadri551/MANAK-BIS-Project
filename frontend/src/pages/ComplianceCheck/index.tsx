@@ -35,6 +35,15 @@ export default function ComplianceCheck() {
     }
   }, [term, lang, selected])
 
+  useEffect(() => {
+    if (!selected) return
+    let active = true
+    getStandard(selected.id, lang)
+      .then((detail) => active && setSelected(detail))
+      .catch(() => {})
+    return () => { active = false }
+  }, [lang, selected?.id])
+
   function startNewSearch() {
     setSelected(null)
     setResults([])
@@ -58,6 +67,7 @@ export default function ComplianceCheck() {
   const completed = useMemo(() => requirements.filter((_, index) => checked[index]).length, [requirements, checked])
   const remaining = requirements.length - completed
   const scheme = selected?.certification_scheme ?? 'NONE'
+  const statusLabel = selected ? t(`status.${selected.status.toLowerCase()}`) : ''
 
   return (
     <div data-testid="compliance-page" className="space-y-6">
@@ -132,7 +142,7 @@ export default function ComplianceCheck() {
               <Info label={t('compliance.scheme')} value={scheme} />
               <Info label={t('compliance.mandatory')} value={selected.certification_mandatory ? t('compliance.mandatory') : t('compliance.notMandatory')} />
               <Info label={t('compliance.qco')} value={selected.has_qco_gazette || '—'} />
-              <Info label={t('compliance.status')} value={selected.status} />
+              <Info label={t('compliance.status')} value={statusLabel} />
             </div>
             {selected.certification && <p className="mt-4 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-slate-300">{t('compliance.certification')}: {selected.certification}</p>}
             <p className="mt-4 text-xs text-slate-500">{t('compliance.catalogueNote')}</p>
@@ -156,7 +166,7 @@ export default function ComplianceCheck() {
                   )
                 })}
               </div>
-            ) : <p className="mt-4 text-sm text-slate-500">No catalogue requirements are available for this standard.</p>}
+            ) : <p className="mt-4 text-sm text-slate-500">{t('compliance.noRequirements')}</p>}
           </div>
         </div>
       )}

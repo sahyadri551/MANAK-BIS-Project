@@ -30,7 +30,7 @@ class StandardRepository:
         if department:
             stmt = stmt.where(Standard.department_name == department)
         if aspect:
-            stmt = stmt.where(Standard.aspect == aspect)
+            stmt = stmt.where(func.lower(Standard.aspect) == aspect.strip().lower())
         if domain:
             stmt = stmt.where(Standard.domain == domain)
         if group:

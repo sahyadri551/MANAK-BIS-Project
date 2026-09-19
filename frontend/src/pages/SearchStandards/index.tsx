@@ -13,7 +13,10 @@ const INITIAL_LIMIT = 40
 export default function SearchStandards() {
   const { t, lang } = useI18n()
   const [searchParams] = useSearchParams()
-  const domainParam = searchParams.get('domain')?.trim() || ''
+  const departmentParam = searchParams.get('department')?.trim() || ''
+  const aspectParam = searchParams.get('aspect')?.trim() || ''
+  const groupParam = searchParams.get('group')?.trim() || ''
+  const ministryParam = searchParams.get('ministry')?.trim() || ''
   const [term, setTerm] = useState('')
   const [items, setItems] = useState<StandardSummary[]>(() => getCachedStandards({ limit: INITIAL_LIMIT }) ?? [])
   const [loading, setLoading] = useState(items.length === 0)
@@ -22,10 +25,17 @@ export default function SearchStandards() {
   useEffect(() => {
     let active = true
     const search = term.trim()
+    const filters = {
+      department: departmentParam || undefined,
+      aspect: aspectParam || undefined,
+      group: groupParam || undefined,
+      ministry: ministryParam || undefined,
+    }
+    const hasFilter = Object.values(filters).some(Boolean)
     const params = search
-      ? { search, domain: domainParam || undefined, limit: 100, lang }
-      : domainParam
-        ? { domain: domainParam, limit: 100, lang }
+      ? { search, ...filters, limit: 100, lang }
+      : hasFilter
+        ? { ...filters, limit: 100, lang }
         : { limit: INITIAL_LIMIT, lang }
     const cached = getCachedStandards(params)
 
@@ -57,7 +67,7 @@ export default function SearchStandards() {
       active = false
       window.clearTimeout(delay)
     }
-  }, [term, lang, domainParam])
+  }, [term, lang, departmentParam, aspectParam, groupParam, ministryParam])
 
   return (
     <div data-testid="search-standards-page" className="space-y-5">
@@ -74,10 +84,10 @@ export default function SearchStandards() {
       {loading && items.length === 0 ? (
         <Loader />
       ) : items.length === 0 ? (
-        <EmptyState icon={Search} title="No standards found" />
+        <EmptyState icon={Search} title={t('results.none')} />
       ) : (
         <div className="relative">
-          {searching && <div className="absolute right-2 -top-10 text-xs text-slate-500">Searching…</div>}
+          {searching && <div className="absolute right-2 -top-10 text-xs text-slate-500">{t('results.searching')}</div>}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((s) => (
               <Link

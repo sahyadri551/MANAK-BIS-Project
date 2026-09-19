@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.repositories.standard_repository import StandardRepository
 from app.schemas.standard import (
+    BrowseResponse,
     FilterOptions,
     StandardCreate,
     StandardDetail,
@@ -27,6 +28,8 @@ def list_standards(
     department: str | None = None,
     aspect: str | None = None,
     domain: str | None = None,
+    group: str | None = None,
+    ministry: str | None = None,
     search: str | None = None,
     lang: str = "en",
     limit: int = Query(200, le=500),
@@ -39,6 +42,8 @@ def list_standards(
         department=department,
         aspect=aspect,
         domain=domain,
+        group=group,
+        ministry=ministry,
         search=search,
         limit=limit,
         offset=offset,
@@ -53,6 +58,11 @@ def stats(service: StandardService = Depends(get_service)):
 @router.get("/meta/filters", response_model=FilterOptions)
 def filter_options(service: StandardService = Depends(get_service)):
     return service.filter_options()
+
+
+@router.get("/meta/browse", response_model=BrowseResponse)
+def browse_options(lang: str = "en", service: StandardService = Depends(get_service)):
+    return service.browse_options(lang)
 
 
 @router.get("/{standard_id}/pdf")
