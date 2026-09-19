@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { StatusBadge } from '../../components/common/StatusBadge'
 import { Loader } from '../../components/common/Loader'
 import { EmptyState } from '../../components/common/EmptyState'
@@ -17,7 +17,6 @@ export default function SearchStandards() {
   const aspectParam = searchParams.get('aspect')?.trim() || ''
   const groupParam = searchParams.get('group')?.trim() || ''
   const ministryParam = searchParams.get('ministry')?.trim() || ''
-  const hasBrowseFilter = Boolean(departmentParam || aspectParam || groupParam || ministryParam)
   const [term, setTerm] = useState('')
   const [items, setItems] = useState<StandardSummary[]>(() => getCachedStandards({ limit: INITIAL_LIMIT }) ?? [])
   const [loading, setLoading] = useState(items.length === 0)
@@ -72,16 +71,6 @@ export default function SearchStandards() {
 
   return (
     <div data-testid="search-standards-page" className="space-y-5">
-      {hasBrowseFilter && (
-        <Link
-          to="/browse"
-          data-testid="back-to-browse"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-accent"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('browse.back')}
-        </Link>
-      )}
       <div className="relative max-w-xl">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
         <input
