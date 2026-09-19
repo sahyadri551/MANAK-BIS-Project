@@ -219,6 +219,8 @@ STANDARDS = [
     # --- Electronics ---
     {
         "is_number": "IS 616:2017",
+        "certification": "Mandatory BIS Certification under QCO",
+        "has_qco_gazette": "Yes",
         "title": "Audio, Video and Similar Electronic Apparatus — Safety Requirements",
         "status": "Active",
         "department": "Electronics & IT",
@@ -270,6 +272,8 @@ STANDARDS = [
     },
     {
         "is_number": "IS 1293:2019",
+        "certification": "BIS Certification (ISI Mark)",
+        "has_qco_gazette": "No",
         "title": "Plugs and Socket-Outlets of Rated Voltage up to 250 V — Specification",
         "status": "Active",
         "department": "Electronics & IT",
@@ -287,6 +291,8 @@ STANDARDS = [
     },
     {
         "is_number": "IS 302-1:2008",
+        "certification": "Mandatory BIS Certification under QCO",
+        "has_qco_gazette": "Yes",
         "title": "Household and Similar Electrical Appliances — Safety, General Requirements",
         "status": "Withdrawn",
         "department": "Electronics & IT",
@@ -303,6 +309,8 @@ STANDARDS = [
     # --- Food Safety ---
     {
         "is_number": "IS 10500:2012",
+        "certification": "BIS Certification (ISI Mark) recommended for packaged water units",
+        "has_qco_gazette": "No",
         "title": "Drinking Water — Specification",
         "status": "Active",
         "department": "Food & Agriculture",
@@ -322,6 +330,8 @@ STANDARDS = [
     },
     {
         "is_number": "IS 14543:2016",
+        "certification": "Mandatory BIS Certification under QCO",
+        "has_qco_gazette": "Yes",
         "title": "Packaged Drinking Water (Other Than Mineral Water) — Specification",
         "status": "Active",
         "department": "Food & Agriculture",
