@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useNavigate } from 'react-router-dom'
 
 import type { RecommendationItem } from '../../types/recommendation'
 import { useI18n } from '../../i18n'
@@ -19,6 +20,7 @@ type Props = {
 
 export function SemanticMatchChart({ items }: Props) {
   const { lang } = useI18n()
+  const navigate = useNavigate()
   if (items.length === 0) {
     return null
   }
@@ -27,6 +29,7 @@ export function SemanticMatchChart({ items }: Props) {
     name: item.is_number,
     score: Math.round(item.score * 100),
     title: item.title,
+    standardId: item.standard_id,
   }))
 
   return (
@@ -45,6 +48,9 @@ export function SemanticMatchChart({ items }: Props) {
         </span>
       </div>
 
+      {/* Recharts isn't RTL-aware — force LTR here so bar labels and tooltips
+          keep their correct positions even when the app-wide dir is "rtl" (Urdu). */}
+      <div dir="ltr">
       <ResponsiveContainer
         width="100%"
         height={Math.max(280, items.length * 44)}
@@ -120,6 +126,11 @@ export function SemanticMatchChart({ items }: Props) {
             background={{ fill: '#172033', radius: 8 }}
             isAnimationActive={true}
             animationDuration={650}
+            cursor="pointer"
+            onClick={(entry: any) => {
+              const standardId = entry?.standardId ?? entry?.payload?.standardId
+              if (standardId != null) navigate(`/standards/${standardId}`)
+            }}
           >
             {chartData.map((entry) => (
               <Cell key={entry.name} fill="url(#semanticMatchGradient)" />
@@ -127,6 +138,7 @@ export function SemanticMatchChart({ items }: Props) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   )
 }

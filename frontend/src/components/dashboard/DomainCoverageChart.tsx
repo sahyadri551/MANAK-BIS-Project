@@ -42,6 +42,9 @@ export function DomainCoverageChart({ data,}: { data: Record<string, number>}) {
         </span>
       </div>
 
+      {/* Recharts isn't RTL-aware — force LTR here so bar labels and tooltips
+          keep their correct positions even when the app-wide dir is "rtl" (Urdu). */}
+      <div dir="ltr">
       <ResponsiveContainer width="100%" height={320}>
         <BarChart
           data={rows}
@@ -100,6 +103,7 @@ export function DomainCoverageChart({ data,}: { data: Record<string, number>}) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   )
 }
