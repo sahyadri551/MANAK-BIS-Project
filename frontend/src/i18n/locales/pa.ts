@@ -118,4 +118,5 @@ export const pa: Record<string, string> = {
   "compliance.checked": "ਜਾਂਚਿਆ",
   "compliance.remaining": "ਬਾਕੀ",
   "compliance.openDetails": "ਮਿਆਰ ਵੇਰਵੇ ਖੋਲ੍ਹੋ",
+  'browse.back': "ਬ੍ਰਾਊਜ਼ 'ਤੇ ਵਾਪਸ ਜਾਓ",
 }

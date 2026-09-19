@@ -151,15 +151,26 @@ class StandardService:
             by_department=self.repo.count_grouped(Standard.department),
         )
 
+    @staticmethod
+    def _browse_ministry(value: str) -> str:
+        # The source ministry field sometimes contains a department/ministry
+        # path. Browse by its stable leading ministry/department name instead
+        # of exposing every path variant as a separate category.
+        return value.split(" - ", 1)[0].split(",", 1)[0].strip()
+
     def browse_options(self, lang: str = "en"):
-        def items(column, localizer=None):
+        def items(column, localizer=None, normalizer=None):
+
             merged: dict[str, dict[str, object]] = {}
             for value, count in self.repo.count_grouped(column).items():
                 if value == "unknown" or not value:
                     continue
                 raw = str(value).strip()
-                key = raw.casefold()
-                entry = merged.setdefault(key, {"value": raw, "label": localizer(raw) if localizer else raw, "count": 0})
+                normalized = normalizer(raw) if normalizer else raw
+                if not normalized:
+                    continue
+                key = normalized.casefold()
+                entry = merged.setdefault(key, {"value": normalized, "label": localizer(normalized) if localizer else normalized, "count": 0})
                 entry["count"] = int(entry["count"]) + int(count)
             return sorted(merged.values(), key=lambda item: str(item["label"]).casefold())
 
@@ -168,7 +179,7 @@ class StandardService:
             "departments": items(_Standard.department_name, lambda value: loc_department(value, lang)),
             "aspects": items(_Standard.aspect, lambda value: loc_aspect(value, lang)),
             "groups": items(_Standard.group),
-            "ministries": items(_Standard.ministry),
+            "ministries": items(_Standard.ministry, normalizer=self._browse_ministry),
         }
 
     def filter_options(self) -> FilterOptions:

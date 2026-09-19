@@ -118,4 +118,5 @@ export const te: Record<string, string> = {
   "compliance.checked": "తనిఖీ చేయబడింది",
   "compliance.remaining": "మిగిలినవి",
   "compliance.openDetails": "ప్రమాణ వివరాలను తెరవండి",
+  'browse.back': "బ్రౌజ్‌కు తిరిగి వెళ్లండి",
 }

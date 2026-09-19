@@ -118,4 +118,5 @@ export const kn: Record<string, string> = {
   "compliance.checked": "ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
   "compliance.remaining": "ಉಳಿದಿವೆ",
   "compliance.openDetails": "ಮಾನದಂಡ ವಿವರಗಳನ್ನು ತೆರೆಯಿರಿ",
+  'browse.back': "ಬ್ರೌಸ್‌ಗೆ ಹಿಂತಿರುಗಿ",
 }

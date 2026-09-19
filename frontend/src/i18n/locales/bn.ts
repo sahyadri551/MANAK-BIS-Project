@@ -118,4 +118,5 @@ export const bn: Record<string, string> = {
   "compliance.checked": "যাচাই করা",
   "compliance.remaining": "বাকি",
   "compliance.openDetails": "মানের বিবরণ খুলুন",
+  'browse.back': "ব্রাউজে ফিরে যান",
 }

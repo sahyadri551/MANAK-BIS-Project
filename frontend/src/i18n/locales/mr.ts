@@ -118,4 +118,5 @@ export const mr: Record<string, string> = {
   "compliance.checked": "तपासले",
   "compliance.remaining": "उर्वरित",
   "compliance.openDetails": "मानक तपशील उघडा",
+  'browse.back': "ब्राउझवर परत जा",
 }

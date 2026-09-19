@@ -40,7 +40,7 @@ class StandardRepository:
         if sub_sub_group:
             stmt = stmt.where(Standard.sub_sub_group == sub_sub_group)
         if ministry:
-            stmt = stmt.where(Standard.ministry == ministry)
+            stmt = stmt.where(func.lower(Standard.ministry).like(f"{ministry.strip().lower()}%"))
         if committee_name:
             stmt = stmt.where(Standard.committee_name == committee_name)
         if search:

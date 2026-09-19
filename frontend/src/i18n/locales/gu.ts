@@ -118,4 +118,5 @@ export const gu: Record<string, string> = {
   "compliance.checked": "ચકાસેલ",
   "compliance.remaining": "બાકી",
   "compliance.openDetails": "ધોરણ વિગતો ખોલો",
+  'browse.back': "બ્રાઉઝ પર પાછા જાઓ",
 }

@@ -118,4 +118,5 @@ export const ml: Record<string, string> = {
   "compliance.checked": "പരിശോധിച്ചു",
   "compliance.remaining": "ശേഷിക്കുന്നു",
   "compliance.openDetails": "മാനദണ്ഡ വിശദാംശങ്ങൾ തുറക്കുക",
+  'browse.back': "ബ്രൗസിലേക്ക് മടങ്ങുക",
 }

@@ -118,4 +118,5 @@ export const or: Record<string, string> = {
   "compliance.checked": "ଯାଞ୍ଚିତ",
   "compliance.remaining": "ବାକି",
   "compliance.openDetails": "ମାନକ ବିବରଣୀ ଖୋଲନ୍ତୁ",
+  'browse.back': "ବ୍ରାଉଜକୁ ଫେରନ୍ତୁ",
 }

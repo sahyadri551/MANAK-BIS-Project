@@ -168,4 +168,5 @@ export const en: Record<string, string> = {
   'browse.categories': 'categories',
   'compliance.searchButton': 'Start a new search',
   'compliance.noRequirements': 'No catalogue requirements are available for this standard',
+  'browse.back': "Back to Browse",
 }

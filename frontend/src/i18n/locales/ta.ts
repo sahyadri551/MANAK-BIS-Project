@@ -118,4 +118,5 @@ export const ta: Record<string, string> = {
   "compliance.checked": "சரிபார்க்கப்பட்டது",
   "compliance.remaining": "மீதம்",
   "compliance.openDetails": "தரநிலை விவரங்களைத் திறக்கவும்",
+  'browse.back': "உலாவலுக்குத் திரும்புக",
 }

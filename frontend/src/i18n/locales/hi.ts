@@ -129,4 +129,5 @@ export const hi: Record<string, string> = {
   "compliance.checked": "जाँची गई",
   "compliance.remaining": "शेष",
   "compliance.openDetails": "मानक विवरण खोलें",
+  'browse.back': "ब्राउज़ पर वापस जाएँ",
 }

@@ -118,4 +118,5 @@ export const ur: Record<string, string> = {
   "compliance.checked": "جانچا گیا",
   "compliance.remaining": "باقی",
   "compliance.openDetails": "معیار کی تفصیلات کھولیں",
+  'browse.back': "براؤز پر واپس جائیں",
 }
