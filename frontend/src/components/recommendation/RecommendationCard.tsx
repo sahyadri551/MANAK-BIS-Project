@@ -58,6 +58,11 @@ export function RecommendationCard({ item, index, selected, onToggleCompare, ret
           </h3>
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
+            {item.latest_version && (
+              <span className="rounded-md border border-slate-400/20 bg-slate-400/10 px-2 py-1 text-[11px] font-medium text-slate-300">
+                {pdfCopy(lang, 'latest')}: v{item.latest_version}
+              </span>
+            )}
             {item.department && (
               <span className="rounded-md border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 font-mono text-[11px] font-medium text-cyan-300">
                 {item.department}

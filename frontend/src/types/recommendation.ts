@@ -26,6 +26,7 @@ export interface RecommendationItem {
   no_of_revision: number
   amendment_count: number
   reaffirmation_year: number | null
+  latest_version: string | null
   certification_scheme: 'ISI_MANDATORY' | 'ISI_VOLUNTARY' | 'CRS' | 'HALLMARKING' | 'NONE'
   certification_mandatory: boolean
   matched_requirements: string[]
