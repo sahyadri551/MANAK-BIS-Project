@@ -20,6 +20,38 @@ from app.services.localization import (
     loc_title,
 )
 
+CANONICAL_DEPARTMENTS = (\n    "AYUSH DEPARTMENT",\n    "CHEMICAL DEPARTMENT",\n    "CIVIL ENGINEERING DEPARTMENT",\n    "ELECTRONICS AND INFORMATION TECHNOLOGY DEPARTMENT",\n    "ELECTROTECHNICAL DEPARTMENT",\n    "ENVIRONMENT AND ECOLOGY DEPARTMENT",\n    "FOOD AND AGRICULTURE DEPARTMENT",\n    "MANAGEMENT SYSTEM DEPARTMENT",\n    "MECHANICAL ENGINEERING DEPARTMENT",\n    "MEDICAL EQUIPMENT AND HOSPITAL PLANNING DEPARTMENT",\n    "METALLURGICAL ENGINEERING DEPARTMENT",\n    "PETROLEUM, COAL AND RELATED PRODUCTS DEPARTMENT",\n    "PRODUCTION AND GENERAL ENGINEERING DEPARTMENT",\n    "SERVICE SECTOR DEPARTMENT",\n    "TEXTILE DEPARTMENT",\n    "TRANSPORT ENGINEERING DEPARTMENT",\n    "WATER RESOURCES DEPARTMENT",\n)\n
+CANONICAL_GROUPS = (\n    "Accounting and Finance Services",\n    "Agriculture, Agricultural Products and Implements",\n    "Banking and Financial Services",\n    "Building Materials including Paints",\n    "Business Services",\n    "Chemicals, Plastics and their Products including packaging and Environment",\n    "Civil Engineering Design and Construction",\n    "Coal and Petroleum products",\n    "Communication Services",\n    "Education, Educational Services and other related Services",\n    "Electrical Switchgear and Other Electrical Products",\n    "Electrical Appliances and Accessories",\n    "Electronic and Telecom equipments, components and devices",\n    "Environment Services",\n    "Equipments for use in Mines and Explosive Atmosphere",\n    "Ergonomics and Anthropometry",\n    "Fire Fighting Equipments and Accessories",\n    "Food, Food Products and food processing equipments",\n    "Furniture",\n    "Gases, Gas Cylinders , Machine tools and other mechanical products",\n    "Health, Sports and Fitness Services",\n    "Household Products Appliances(non-electrical)",\n    "Information Technology products and applications",\n    "IT and IT Enabled Services",\n    "Leather and Leather Products",\n    "Management systems",\n    "Media and Entertainment Services",\n    "Medical and Hospital Equipments",\n    "Metals, Alloys and Metal Products (including Steel Products)",\n    "Pumps, Engines and Compressors",\n    "Rubber and Rubber Products",\n    "Software and systems",\n    "Sports goods including mountaineering equipment",\n    "Textile, Textile Products and Machinery",\n    "Transport and Logistics Services",\n    "Transport and Related Products",\n    "Travel,Tourism and Hospitality",\n)\n
+CANONICAL_MINISTRIES = (\n    "Department of Atomic Energy",\n    "Ministry of Agriculture",\n    "Ministry of Animal Husbandry",\n    "Ministry of AYUSH",\n    "Ministry of Chemicals and Fertilizers",\n    "Ministry of Civil Aviation",\n    "Ministry of Coal",\n    "Ministry of Commerce and Industry",\n    "Ministry of Communications",\n    "Ministry of Consumer Affairs",\n    "Ministry of Corporate Affairs",\n    "Ministry of Culture",\n    "Ministry of Defence",\n    "Ministry of Earth Sciences",\n    "Ministry of Education",\n    "Ministry of Electronics and Information Technology",\n    "Ministry of Environment",\n    "Ministry of Finance",\n    "Ministry of Food Processing Industries",\n    "Ministry of Health and Family Welfare",\n    "Ministry of Heavy Industries",\n    "Ministry of Home Affairs",\n    "Ministry of Housing and Urban Affairs",\n    "Ministry of Housing and Urban Poverty Alleviation",\n    "Ministry of Information and Broadcasting",\n    "Ministry of Jal Shakti",\n    "Ministry of Labour and Employment",\n    "Ministry of Micro",\n    "Ministry of Mines",\n    "Ministry of New and Renewable Energy",\n    "Ministry of Personnel",\n    "Ministry of Petroleum and Natural Gas",\n    "Ministry of Ports",\n    "Ministry of Power",\n    "Ministry of Railways",\n    "Ministry of Road Transport and Highways",\n    "Ministry of Rural Development",\n    "Ministry of Science and Technology",\n    "Ministry of Social Justice and Empowerment",\n    "Ministry of Statistics and Programme Implementation",\n    "Ministry of Steel",\n    "Ministry of Textiles",\n    "Ministry of Tourism",\n    "Ministry of Women and Child Development",\n)\n
+def _catalog_key(value: str) -> str:
+    normalized = " ".join(str(value).strip().casefold().split())
+    return normalized.replace(" ,", ",").replace(", ", ",").replace(" (", "(").replace("( ", "(").replace(" )", ")")
+
+
+def _canonical(value: str, values: tuple[str, ...]) -> str | None:
+    key = _catalog_key(value)
+    for candidate in values:
+        if _catalog_key(candidate) == key:
+            return candidate
+    return None
+
+
+def _canonical_department(value: str) -> str | None:
+    return _canonical(value, CANONICAL_DEPARTMENTS)
+
+
+def _canonical_group(value: str) -> str | None:
+    return _canonical(value, CANONICAL_GROUPS)
+
+
+def _canonical_ministries(value: str) -> list[str]:
+    result: list[str] = []
+    for part in str(value).split(","):
+        canonical = _canonical(part, CANONICAL_MINISTRIES)
+        if canonical and canonical not in result:
+            result.append(canonical)
+    return result
+
 
 def to_related(
     standard: Standard,
@@ -152,23 +184,48 @@ class StandardService:
         )
 
     def browse_options(self, lang: str = "en"):
-        def items(column, localizer=None):
+        def grouped_items(column, canonicalizer, localizer=None):
             merged: dict[str, dict[str, object]] = {}
             for value, count in self.repo.count_grouped(column).items():
                 if value == "unknown" or not value:
                     continue
                 raw = str(value).strip()
-                key = raw.casefold()
-                entry = merged.setdefault(key, {"value": raw, "label": localizer(raw) if localizer else raw, "count": 0})
+                canonical = canonicalizer(raw)
+                if not canonical:
+                    continue
+                entry = merged.setdefault(canonical, {"value": canonical, "label": localizer(canonical) if localizer else canonical, "count": 0})
                 entry["count"] = int(entry["count"]) + int(count)
             return sorted(merged.values(), key=lambda item: str(item["label"]).casefold())
 
+        def department_items():
+            counts = {value: 0 for value in CANONICAL_DEPARTMENTS}
+            for raw, count in self.repo.count_grouped(Standard.department_name).items():
+                if raw and raw != "unknown":
+                    canonical = _canonical_department(str(raw))
+                    if canonical:
+                        counts[canonical] += int(count)
+            return sorted(
+                ({"value": value, "label": loc_department(value, lang), "count": count} for value, count in counts.items() if count),
+                key=lambda item: str(item["label"]).casefold(),
+            )
+
+        def ministry_items():
+            counts = {value: 0 for value in CANONICAL_MINISTRIES}
+            for raw, count in self.repo.count_grouped(Standard.ministry).items():
+                if raw and raw != "unknown":
+                    for ministry in _canonical_ministries(str(raw)):
+                        counts[ministry] += int(count)
+            return sorted(
+                ({"value": value, "label": value, "count": count} for value, count in counts.items() if count),
+                key=lambda item: str(item["label"]).casefold(),
+            )
+
         from app.db.models.standard import Standard as _Standard
         return {
-            "departments": items(_Standard.department_name, lambda value: loc_department(value, lang)),
-            "aspects": items(_Standard.aspect, lambda value: loc_aspect(value, lang)),
-            "groups": items(_Standard.group),
-            "ministries": items(_Standard.ministry),
+            "departments": department_items(),
+            "aspects": grouped_items(_Standard.aspect, lambda value: value.strip(), lambda value: loc_aspect(value, lang)),
+            "groups": grouped_items(_Standard.group, _canonical_group),
+            "ministries": ministry_items(),
         }
 
     def filter_options(self) -> FilterOptions:

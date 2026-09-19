@@ -28,19 +28,20 @@ class StandardRepository:
         if status:
             stmt = stmt.where(Standard.status == status)
         if department:
-            stmt = stmt.where(Standard.department_name == department)
+            stmt = stmt.where(func.lower(func.trim(Standard.department_name)) == department.strip().lower())
         if aspect:
             stmt = stmt.where(func.lower(Standard.aspect) == aspect.strip().lower())
         if domain:
             stmt = stmt.where(Standard.domain == domain)
         if group:
-            stmt = stmt.where(Standard.group == group)
+            stmt = stmt.where(func.lower(func.trim(Standard.group)) == group.strip().lower())
         if sub_group:
             stmt = stmt.where(Standard.sub_group == sub_group)
         if sub_sub_group:
             stmt = stmt.where(Standard.sub_sub_group == sub_sub_group)
         if ministry:
-            stmt = stmt.where(Standard.ministry == ministry)
+            normalized_ministry = func.replace(func.trim(Standard.ministry), ", ", ",")
+            stmt = stmt.where(func.concat(",", normalized_ministry, ",").contains(f",{ministry.strip()},") )
         if committee_name:
             stmt = stmt.where(Standard.committee_name == committee_name)
         if search:

@@ -1377,6 +1377,23 @@ const MINISTRY: Map = {
 const MAPS = { statuses: STATUS, departments: DEPARTMENT, aspects: ASPECT, groups: GROUP, ministries: MINISTRY }
 
 // Localized label for a value while the underlying value stays English (matching intact).
+function normalizedLabelKey(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([,()])\s*/g, '$1')
+    .toLocaleLowerCase()
+}
+
 export function labelFor(kind: 'statuses' | 'departments' | 'aspects' | 'groups' | 'ministries', value: string, lang: Lang): string {
-  return MAPS[kind]?.[lang]?.[value] ?? value
+  const labels = MAPS[kind]?.[lang]
+  if (!labels) return value
+  const exact = labels[value]
+  if (exact) return exact
+  if (kind === 'groups' || kind === 'ministries') {
+    const normalized = normalizedLabelKey(value)
+    const match = Object.entries(labels).find(([key]) => normalizedLabelKey(key) === normalized)
+    if (match) return match[1]
+  }
+  return value
 }
