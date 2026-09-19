@@ -6,7 +6,6 @@ import { Loader } from '../../components/common/Loader'
 import { getBrowseOptions } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import { labelFor } from '../../i18n/dataLabels'
-import { labelFor } from '../../i18n/dataLabels'
 
 type Item = { value: string; label: string; count: number }
 type Dimension = { key: 'department' | 'aspect' | 'group' | 'ministry'; title: string; items: Item[]; icon: typeof Layers3 }
