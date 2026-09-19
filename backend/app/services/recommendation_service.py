@@ -109,6 +109,7 @@ class RecommendationService:
                     no_of_revision=std.no_of_revision or 0,
                     amendment_count=std.amendment_count or 0,
                     reaffirmation_year=std.reaffirmation_year,
+                    latest_version=std.latest_version,
                     certification_scheme=classify(std.certification, std.has_qco_gazette)[0],
                     certification_mandatory=classify(std.certification, std.has_qco_gazette)[1],
                     matched_requirements=[rmap.get(matched_requirement, matched_requirement) for matched_requirement in matched],
