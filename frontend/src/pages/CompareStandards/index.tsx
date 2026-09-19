@@ -187,15 +187,6 @@ export default function CompareStandards() {
         )}
       </section>
       ) : null}
-
-        <Loader label={t('comparison.loading')} />
-      ) : {comparisonIds.length >= 2 && comparison.length >= 2 ? (
-        <ComparisonPanel items={comparison} />
-      ) : (
-        <div className="panel flex min-h-[220px] items-center justify-center p-8 text-center">
-          <p className="max-w-md text-sm text-slate-500">{t('comparison.noSelection')}</p>
-        </div>
-      )}
     </div>
   )
 }
