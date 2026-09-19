@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { StatusBadge } from '../../components/common/StatusBadge'
 import { Loader } from '../../components/common/Loader'
@@ -12,6 +12,8 @@ const INITIAL_LIMIT = 40
 
 export default function SearchStandards() {
   const { t, lang } = useI18n()
+  const [searchParams] = useSearchParams()
+  const domainParam = searchParams.get('domain')?.trim() || ''
   const [term, setTerm] = useState('')
   const [items, setItems] = useState<StandardSummary[]>(() => getCachedStandards({ limit: INITIAL_LIMIT }) ?? [])
   const [loading, setLoading] = useState(items.length === 0)
@@ -20,7 +22,11 @@ export default function SearchStandards() {
   useEffect(() => {
     let active = true
     const search = term.trim()
-    const params = search ? { search, limit: 100, lang } : { limit: INITIAL_LIMIT, lang }
+    const params = search
+      ? { search, domain: domainParam || undefined, limit: 100, lang }
+      : domainParam
+        ? { domain: domainParam, limit: 100, lang }
+        : { limit: INITIAL_LIMIT, lang }
     const cached = getCachedStandards(params)
 
     if (cached) {
@@ -51,7 +57,7 @@ export default function SearchStandards() {
       active = false
       window.clearTimeout(delay)
     }
-  }, [term, lang])
+  }, [term, lang, domainParam])
 
   return (
     <div data-testid="search-standards-page" className="space-y-5">

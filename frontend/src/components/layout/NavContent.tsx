@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { FileSearch, History, LayoutDashboard, Plus, Search, ShieldCheck } from 'lucide-react'
+import { FileSearch, History, LayoutDashboard, LayoutGrid, Plus, Search, ShieldCheck } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
 
@@ -10,6 +10,7 @@ const MAIN = [
   { to: '/search-standards', key: 'nav.searchStd', icon: Search, testId: 'nav-search-link' },
   { to: '/history', key: 'nav.history', icon: History, testId: 'nav-history-link' },
   { to: '/compliance', key: 'nav.compliance', icon: ShieldCheck, testId: 'nav-compliance-link' },
+  { to: '/browse', key: 'nav.browse', icon: LayoutGrid, testId: 'nav-browse-link' },
 ]
 
 const FOOT: typeof MAIN = []
