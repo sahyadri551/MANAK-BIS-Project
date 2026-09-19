@@ -6,6 +6,7 @@ import { Loader } from '../../components/common/Loader'
 import { getBrowseOptions } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import { labelFor } from '../../i18n/dataLabels'
+import { labelFor } from '../../i18n/dataLabels'
 
 type Item = { value: string; label: string; count: number }
 type Dimension = { key: 'department' | 'aspect' | 'group' | 'ministry'; title: string; items: Item[]; icon: typeof Layers3 }
@@ -66,11 +67,7 @@ export default function BrowseStandards() {
                   data-testid={`browse-${key}-${item.value}`}
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-200 group-hover:text-accent">{labelFor(
-                      key === 'department' ? 'departments' : key === 'aspect' ? 'aspects' : key === 'group' ? 'groups' : 'ministries',
-                      item.label,
-                      lang,
-                    )}</p>
+                    <p className="truncate text-sm font-medium text-slate-200 group-hover:text-accent">{key === 'department' || key === 'aspect' ? labelFor(key === 'department' ? 'departments' : 'aspects', item.label, lang) : item.label}</p>
                     <p className="mt-1 text-xs text-slate-500">{item.count.toLocaleString()} {t('browse.standards')}</p>
                   </div>
                   <ArrowRight className="h-4 w-4 shrink-0 text-slate-600 group-hover:text-accent" />
