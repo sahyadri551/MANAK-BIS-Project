@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Network } from 'lucide-react'
+import { Network, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import type { AlliedStandardCategory, RelatedStandard } from '../../types/standard'
 
 type Props = {
@@ -13,17 +13,19 @@ type Props = {
 }
 
 type Point = { x: number; y: number }
-type CategoryMeta = { label: string; stroke: string; fill: string }
+type CategoryMeta = { label: string; stroke: string }
 
+// Eight hues spread evenly around the color wheel (45° apart) so every
+// category reads as visually distinct at a glance, even at small node sizes.
 const CATEGORY_META: Record<AlliedStandardCategory, CategoryMeta> = {
-  normative_reference: { label: 'Normative References', stroke: '#60a5fa', fill: '#172554' },
-  test_method: { label: 'Test Methods', stroke: '#34d399', fill: '#052e2b' },
-  terminology: { label: 'Terminology', stroke: '#a78bfa', fill: '#2e1065' },
-  safety: { label: 'Safety Standards', stroke: '#f59e0b', fill: '#451a03' },
-  installation: { label: 'Installation', stroke: '#22d3ee', fill: '#083344' },
-  product_spec: { label: 'Product Specifications', stroke: '#f472b6', fill: '#500724' },
-  supersedes: { label: 'Supersedes', stroke: '#fb7185', fill: '#4c0519' },
-  superseded_by: { label: 'Superseded By', stroke: '#c084fc', fill: '#3b0764' },
+  normative_reference: { label: 'Normative References', stroke: '#3b82f6' }, // blue
+  test_method: { label: 'Test Methods', stroke: '#10b981' }, // green
+  terminology: { label: 'Terminology', stroke: '#8b5cf6' }, // violet
+  safety: { label: 'Safety Standards', stroke: '#f97316' }, // orange
+  installation: { label: 'Installation', stroke: '#06b6d4' }, // cyan
+  product_spec: { label: 'Product Specifications', stroke: '#ec4899' }, // pink
+  supersedes: { label: 'Supersedes', stroke: '#ef4444' }, // red
+  superseded_by: { label: 'Superseded By', stroke: '#84cc16' }, // lime
 }
 
 const CATEGORY_ORDER: AlliedStandardCategory[] = [
@@ -32,6 +34,8 @@ const CATEGORY_ORDER: AlliedStandardCategory[] = [
 ]
 
 const MAX_GRAPH_NODES_PER_CATEGORY = 8
+const MIN_SCALE = 0.6
+const MAX_SCALE = 3
 
 function nodePositions(count: number): Point[] {
   if (count === 1) return [{ x: 500, y: 82 }]
@@ -49,6 +53,50 @@ function categoryAnchor(categoryIndex: number, categoryCount: number): Point {
 
 export function AlliedStandardsNetwork({ standard, standards }: Props) {
   const navigate = useNavigate()
+
+  // --- pan/zoom state ---
+  const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 })
+  const svgRef = useRef<SVGSVGElement>(null)
+  const dragRef = useRef<{ dragging: boolean; startX: number; startY: number; originX: number; originY: number }>({
+    dragging: false, startX: 0, startY: 0, originX: 0, originY: 0,
+  })
+
+  const clampScale = (scale: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale))
+
+  const zoomBy = useCallback((factor: number) => {
+    setTransform((prev) => ({ ...prev, scale: clampScale(prev.scale * factor) }))
+  }, [])
+
+  const resetView = useCallback(() => setTransform({ scale: 1, x: 0, y: 0 }), [])
+
+  const handleWheel = useCallback((event: React.WheelEvent<SVGSVGElement>) => {
+    event.preventDefault()
+    const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12
+    setTransform((prev) => ({ ...prev, scale: clampScale(prev.scale * factor) }))
+  }, [])
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
+    dragRef.current = {
+      dragging: true,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: transform.x,
+      originY: transform.y,
+    }
+    svgRef.current?.setPointerCapture(event.pointerId)
+  }, [transform.x, transform.y])
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragRef.current.dragging) return
+    const dx = event.clientX - dragRef.current.startX
+    const dy = event.clientY - dragRef.current.startY
+    setTransform((prev) => ({ ...prev, x: dragRef.current.originX + dx, y: dragRef.current.originY + dy }))
+  }, [])
+
+  const handlePointerUp = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
+    dragRef.current.dragging = false
+    svgRef.current?.releasePointerCapture(event.pointerId)
+  }, [])
 
   const grouped = useMemo(() => {
     const map = new Map<AlliedStandardCategory, RelatedStandard[]>()
@@ -100,43 +148,90 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
         </span>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-hairline bg-base/20">
-        <svg viewBox="0 0 1000 520" className="h-[460px] min-w-[760px] w-full" role="img" aria-label={`Allied standards network for ${standard.is_number}`}>
-          <circle cx="500" cy="260" r="95" fill="#60a5fa" fillOpacity="0.05" />
+      <div className="relative overflow-hidden rounded-xl border border-hairline bg-base/20">
+        {/* zoom controls */}
+        <div className="absolute right-3 top-3 z-10 flex flex-col overflow-hidden rounded-lg border border-hairline bg-surface-2/90 backdrop-blur">
+          <button
+            type="button"
+            aria-label="Zoom in"
+            title="Zoom in"
+            onClick={() => zoomBy(1.25)}
+            className="flex h-8 w-8 items-center justify-center text-slate-300 transition hover:bg-surface-3 hover:text-slate-100"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <div className="h-px w-full bg-hairline" />
+          <button
+            type="button"
+            aria-label="Zoom out"
+            title="Zoom out"
+            onClick={() => zoomBy(0.8)}
+            className="flex h-8 w-8 items-center justify-center text-slate-300 transition hover:bg-surface-3 hover:text-slate-100"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <div className="h-px w-full bg-hairline" />
+          <button
+            type="button"
+            aria-label="Reset view"
+            title="Reset view"
+            onClick={resetView}
+            className="flex h-8 w-8 items-center justify-center text-slate-300 transition hover:bg-surface-3 hover:text-slate-100"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </button>
+        </div>
 
-          {layout.edges.map((edge, index) => (
-            <line key={`edge-${edge.category}-${index}`} x1={edge.from.x} y1={edge.from.y} x2={edge.to.x} y2={edge.to.y} stroke={CATEGORY_META[edge.category].stroke} strokeOpacity="0.28" strokeWidth="1.25" />
-          ))}
+        <svg
+          ref={svgRef}
+          viewBox="0 0 1000 520"
+          className="h-[460px] min-w-[760px] w-full cursor-grab touch-none active:cursor-grabbing"
+          role="img"
+          aria-label={`Allied standards network for ${standard.is_number}`}
+          onWheel={handleWheel}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+        >
+          <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`} style={{ transformOrigin: '500px 260px' }}>
+            <circle cx="500" cy="260" r="95" fill="#60a5fa" fillOpacity="0.05" />
 
-          {grouped.map(({ category }, categoryIndex) => {
-            const anchor = categoryAnchor(categoryIndex, grouped.length)
-            const meta = CATEGORY_META[category]
-            return (
-              <g key={`category-${category}`}>
-                <circle cx={anchor.x} cy={anchor.y} r="18" fill={meta.fill} stroke={meta.stroke} strokeOpacity="0.4" />
-                <text x={anchor.x} y={anchor.y + 3} textAnchor="middle" fill={meta.stroke} fontSize="8" fontWeight="700">{categoryIndex + 1}</text>
-                <text x={anchor.x} y={anchor.y + 34} textAnchor="middle" fill="#94a3b8" fontSize="9">{meta.label}</text>
-              </g>
-            )
-          })}
+            {layout.edges.map((edge, index) => (
+              <line key={`edge-${edge.category}-${index}`} x1={edge.from.x} y1={edge.from.y} x2={edge.to.x} y2={edge.to.y} stroke={CATEGORY_META[edge.category].stroke} strokeOpacity="0.35" strokeWidth="1.25" />
+            ))}
 
-          <g>
-            <circle cx="500" cy="260" r="50" fill="#0f172a" stroke="#60a5fa" strokeWidth="2" />
-            <text x="500" y="253" textAnchor="middle" fill="#60a5fa" fontSize="11" fontWeight="700">{standard.is_number}</text>
-            <text x="500" y="270" textAnchor="middle" fill="#cbd5e1" fontSize="9">Current Standard</text>
+            {grouped.map(({ category, items }, categoryIndex) => {
+              const anchor = categoryAnchor(categoryIndex, grouped.length)
+              const meta = CATEGORY_META[category]
+              return (
+                <g key={`category-${category}`} tabIndex={0} className="outline-none">
+                  <circle cx={anchor.x} cy={anchor.y} r="18" fill={meta.stroke} fillOpacity="0.28" stroke={meta.stroke} strokeWidth="2" />
+                  <text x={anchor.x} y={anchor.y + 3} textAnchor="middle" fill="#0f172a" fontSize="9" fontWeight="700">{categoryIndex + 1}</text>
+                  <text x={anchor.x} y={anchor.y + 34} textAnchor="middle" fill="#94a3b8" fontSize="9">{meta.label}</text>
+                  <title>{`${meta.label} — ${items.length} standard${items.length === 1 ? '' : 's'}`}</title>
+                </g>
+              )
+            })}
+
+            <g>
+              <circle cx="500" cy="260" r="50" fill="#0f172a" stroke="#60a5fa" strokeWidth="2" />
+              <text x="500" y="253" textAnchor="middle" fill="#60a5fa" fontSize="11" fontWeight="700">{standard.is_number}</text>
+              <text x="500" y="270" textAnchor="middle" fill="#cbd5e1" fontSize="9">Current Standard</text>
+            </g>
+
+            {layout.nodes.map(({ item, point, category }) => {
+              const meta = CATEGORY_META[category]
+              return (
+                <g key={`${category}-${item.id}`} role="link" tabIndex={0} aria-label={`Open ${item.is_number}: ${item.title}`} className="cursor-pointer outline-none" onClick={() => navigate(`/standards/${item.id}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/standards/${item.id}`) } }}>
+                  <circle cx={point.x} cy={point.y} r="18" fill={meta.stroke} fillOpacity="0.22" stroke={meta.stroke} strokeWidth="2" />
+                  <text x={point.x} y={point.y - 2} textAnchor="middle" fill="#0f172a" fontSize="7.5" fontWeight="700">{item.is_number.length > 12 ? `${item.is_number.slice(0, 11)}…` : item.is_number}</text>
+                  <text x={point.x} y={point.y + 9} textAnchor="middle" fill={meta.stroke} fontSize="6.5" fontWeight="600">{item.status}</text>
+                  <title>{`${item.is_number} — ${item.title}`}</title>
+                </g>
+              )
+            })}
           </g>
-
-          {layout.nodes.map(({ item, point, category }) => {
-            const meta = CATEGORY_META[category]
-            return (
-              <g key={`${category}-${item.id}`} role="link" tabIndex={0} aria-label={`Open ${item.is_number}: ${item.title}`} className="cursor-pointer outline-none" onClick={() => navigate(`/standards/${item.id}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/standards/${item.id}`) } }}>
-                <circle cx={point.x} cy={point.y} r="18" fill={meta.fill} stroke={meta.stroke} strokeWidth="1.25" />
-                <text x={point.x} y={point.y - 2} textAnchor="middle" fill="#e2e8f0" fontSize="7.5" fontWeight="700">{item.is_number.length > 12 ? `${item.is_number.slice(0, 11)}…` : item.is_number}</text>
-                <text x={point.x} y={point.y + 9} textAnchor="middle" fill="#64748b" fontSize="6.5">{item.status}</text>
-                <title>{`${item.is_number} — ${item.title}`}</title>
-              </g>
-            )
-          })}
         </svg>
       </div>
 
@@ -149,7 +244,7 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
           const meta = CATEGORY_META[category]
           return <div key={category} className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: meta.stroke }} /><span>{meta.label}</span></div>
         })}
-        <span className="ml-auto text-slate-600">Click a node to open its standard</span>
+        <span className="ml-auto text-slate-600">Scroll or drag to pan/zoom · click a node to open its standard</span>
       </div>
     </section>
   )
