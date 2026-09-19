@@ -28,6 +28,7 @@ export default function CompareStandards() {
   const [comparison, setComparison] = useState<StandardDetail[]>([])
   const [loading, setLoading] = useState(true)
   const [comparisonLoading, setComparisonLoading] = useState(initialIds.length >= 2)
+  const [showSelector, setShowSelector] = useState(initialIds.length < 2)
 
   useEffect(() => {
     let active = true
@@ -98,10 +99,22 @@ export default function CompareStandards() {
     setComparison([])
     setComparisonIds([])
     setSearchParams({})
+    setShowSelector(true)
   }
 
-  const selectedSet = new Set(selectedIds)
-  const displayedItems = items.filter((item) => selectedSet.has(item.id))
+  function changeSelection() {
+    setShowSelector(true)
+    setComparison([])
+    setComparisonIds([])
+  }
+
+  const comparisonMode = comparisonIds.length >= 2 && !showSelector
+
+  useEffect(() => {
+    if (comparisonMode) {
+      document.querySelector('main')?.scrollTo({ top: 0, behavior: 'auto' })
+    }
+  }, [comparisonMode])
 
   return (
     <div data-testid="compare-standards-page" className="space-y-6">
@@ -110,6 +123,24 @@ export default function CompareStandards() {
         <p className="mt-1 max-w-3xl text-sm text-slate-500">{t('comparison.subtitle')}</p>
       </div>
 
+      {comparisonMode ? (
+        comparisonLoading ? (
+          <Loader label={t('comparison.loading')} />
+        ) : comparison.length >= 2 ? (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button type="button" onClick={changeSelection} className="rounded-lg border border-hairline px-3 py-2 text-xs font-semibold text-slate-400 hover:bg-surface-2 hover:text-slate-200">
+                {t('comparison.changeSelection')}
+              </button>
+            </div>
+            <ComparisonPanel items={comparison} />
+          </div>
+        ) : (
+          <div className="panel flex min-h-[220px] items-center justify-center p-8 text-center">
+            <p className="max-w-md text-sm text-slate-500">{t('comparison.noSelection')}</p>
+          </div>
+        )
+      ) : showSelector ? (
       <section className="panel p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -155,8 +186,8 @@ export default function CompareStandards() {
           </div>
         )}
       </section>
+      ) : null}
 
-      {comparisonLoading ? (
         <Loader label={t('comparison.loading')} />
       ) : comparisonIds.length >= 2 && comparison.length >= 2 ? (
         <ComparisonPanel items={comparison} />

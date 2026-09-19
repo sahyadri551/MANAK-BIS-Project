@@ -131,6 +131,7 @@ export const en: Record<string, string> = {
   'comparison.minimum': 'Select at least 2 standards.',
   'comparison.maximum': 'You can compare up to 4 standards.',
   'comparison.clear': 'Clear selection',
+  'comparison.changeSelection': 'Change selection',
   'comparison.results': 'Comparison',
   'comparison.noSelection': 'Select 2 to 4 standards above, then compare them.',
   'comparison.loading': 'Loading selected standards…',
