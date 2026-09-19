@@ -189,7 +189,7 @@ export default function CompareStandards() {
       ) : null}
 
         <Loader label={t('comparison.loading')} />
-      ) : comparisonIds.length >= 2 && comparison.length >= 2 ? (
+      ) : {comparisonIds.length >= 2 && comparison.length >= 2 ? (
         <ComparisonPanel items={comparison} />
       ) : (
         <div className="panel flex min-h-[220px] items-center justify-center p-8 text-center">
