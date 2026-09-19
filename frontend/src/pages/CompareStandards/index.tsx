@@ -92,6 +92,7 @@ export default function CompareStandards() {
       return
     }
     setSearchParams({ ids: selectedIds.join(',') })
+    setShowSelector(false)
   }
 
   function clearSelection() {
