@@ -19,7 +19,7 @@ export default function ComplianceCheck() {
 
   useEffect(() => {
     const value = term.trim()
-    if (!value) {
+    if (!value || selected) {
       setResults([])
       return
     }
@@ -33,7 +33,7 @@ export default function ComplianceCheck() {
       active = false
       window.clearTimeout(timer)
     }
-  }, [term, lang])
+  }, [term, lang, selected])
 
   async function choose(standard: StandardSummary) {
     setSelected(null)
@@ -86,7 +86,7 @@ export default function ComplianceCheck() {
             ))}
           </div>
         )}
-        {term.trim() && !results.length && <p className="mt-3 text-xs text-slate-500">{t('compliance.notFound')}</p>}
+        {term.trim() && !selected && !results.length && <p className="mt-3 text-xs text-slate-500">{t('compliance.notFound')}</p>}
       </div>
 
       {loading && <Loader label={t('compliance.loading')} />}
