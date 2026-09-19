@@ -36,6 +36,8 @@ export default function ComplianceCheck() {
   }, [term, lang])
 
   async function choose(standard: StandardSummary) {
+    setSelected(null)
+    setResults([])
     setLoading(true)
     try {
       const detail = await getStandard(standard.id, lang)
@@ -71,7 +73,7 @@ export default function ComplianceCheck() {
             className="field pl-9"
           />
         </div>
-        {term.trim() && results.length > 0 && (
+        {term.trim() && results.length > 0 && !selected && (
           <div className="mt-3 max-w-2xl overflow-hidden rounded-lg border border-hairline bg-surface-2/50">
             {results.map((item) => (
               <button key={item.id} type="button" onClick={() => choose(item)} className="block w-full border-b border-hairline px-4 py-3 text-left last:border-b-0 hover:bg-surface-2" data-testid={`compliance-result-${item.is_number}`}>
