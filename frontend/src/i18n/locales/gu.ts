@@ -48,6 +48,7 @@ export const gu: Record<string, string> = {
   "pdf.tooLarge": "PDF ખૂબ મોટી છે.",
   "pdf.maxSize": "મહત્તમ માન્ય કદ 20 MB છે.",
   "pdf.attached": "PDF જોડાઈ",
+  'filter.status': 'સ્થિતિ',
   'filter.department': 'વિભાગ',
   'filter.aspect': 'પાસું',
   'filter.all': 'બધા',

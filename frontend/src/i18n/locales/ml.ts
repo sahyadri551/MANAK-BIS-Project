@@ -48,6 +48,7 @@ export const ml: Record<string, string> = {
   "pdf.tooLarge": "PDF വളരെ വലുതാണ്.",
   "pdf.maxSize": "പരമാവധി അനുവദനീയ വലുപ്പം 20 MB.",
   "pdf.attached": "PDF ചേർത്തു",
+  'filter.status': 'നില',
   'filter.department': 'വകുപ്പ്',
   'filter.aspect': 'വശം',
   'filter.all': 'എല്ലാം',

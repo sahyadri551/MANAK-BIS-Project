@@ -48,6 +48,7 @@ export const ur: Record<string, string> = {
   "pdf.tooLarge": "PDF بہت بڑی ہے۔",
   "pdf.maxSize": "زیادہ سے زیادہ مجاز سائز 20 MB ہے۔",
   "pdf.attached": "PDF منسلک ہو گئی",
+  'filter.status': 'حیثیت',
   'filter.department': 'شعبہ',
   'filter.aspect': 'پہلو',
   'filter.all': 'سب',

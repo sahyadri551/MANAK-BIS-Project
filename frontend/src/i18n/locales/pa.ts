@@ -48,6 +48,7 @@ export const pa: Record<string, string> = {
   "pdf.tooLarge": "PDF ਬਹੁਤ ਵੱਡੀ ਹੈ।",
   "pdf.maxSize": "ਵੱਧ ਤੋਂ ਵੱਧ ਮਨਜ਼ੂਰ ਆਕਾਰ 20 MB ਹੈ।",
   "pdf.attached": "PDF ਜੁੜ ਗਈ",
+  'filter.status': 'ਸਥਿਤੀ',
   'filter.department': 'ਵਿਭਾਗ',
   'filter.aspect': 'ਪਹਿਲੂ',
   'filter.all': 'ਸਭ',

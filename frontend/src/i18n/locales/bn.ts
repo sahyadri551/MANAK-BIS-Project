@@ -48,6 +48,7 @@ export const bn: Record<string, string> = {
   "pdf.tooLarge": "PDF খুব বড়।",
   "pdf.maxSize": "সর্বোচ্চ অনুমোদিত আকার 20 MB।",
   "pdf.attached": "PDF সংযুক্ত হয়েছে",
+  'filter.status': 'অবস্থা',
   'filter.department': 'বিভাগ',
   'filter.aspect': 'দিক',
   'filter.all': 'সব',

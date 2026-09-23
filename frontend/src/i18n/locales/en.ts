@@ -109,6 +109,7 @@ export const en: Record<string, string> = {
   "pdf.tooLarge": "PDF is too large.",
   "pdf.maxSize": "Maximum allowed size is 20 MB.",
   "pdf.attached": "PDF attached",
+  'filter.status': 'Status',
   'filter.department': 'Department',
   'filter.aspect': 'Aspect',
   'filter.all': 'All',

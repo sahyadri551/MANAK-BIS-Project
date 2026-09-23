@@ -49,6 +49,7 @@ export const hi: Record<string, string> = {
   "pdf.tooLarge": "PDF बहुत बड़ी है।",
   "pdf.maxSize": "अधिकतम अनुमत आकार 20 MB है।",
   "pdf.attached": "PDF संलग्न की गई",
+  'filter.status': 'स्थिति',
   'filter.department': 'विभाग',
   'filter.aspect': 'पहलू',
   'filter.all': 'सभी',

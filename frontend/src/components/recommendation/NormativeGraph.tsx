@@ -28,8 +28,11 @@ const SPEC_Y = 50
 const REQ_Y = 190
 const STD_Y = 330
 const COMP_Y = 470
-const WIDTH = 1080
 const MARGIN = 130
+// Minimum horizontal gap between neighbouring node edges so labels never overlap.
+const NODE_GAP = 40
+const MIN_SPACING = NODE_W + NODE_GAP
+const BASE_WIDTH = 1080
 
 function truncate(text: string, max: number) {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text
@@ -96,8 +99,12 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
 
     const columns = groups.flatMap((g) => g.items.map((item) => ({ item, reqLabel: g.label })))
     const count = columns.length
-    const spacing = count > 1 ? (WIDTH - 2 * MARGIN) / (count - 1) : 0
-    const colX = columns.map((_, i) => (count === 1 ? WIDTH / 2 : MARGIN + i * spacing))
+    // Width grows with the column count so nodes always keep at least MIN_SPACING
+    // between their centers — fixes nodes/labels overlapping once there are 4+ columns.
+    const neededWidth = count > 1 ? 2 * MARGIN + (count - 1) * MIN_SPACING : BASE_WIDTH
+    const width = Math.max(BASE_WIDTH, neededWidth)
+    const spacing = count > 1 ? (width - 2 * MARGIN) / (count - 1) : 0
+    const colX = columns.map((_, i) => (count === 1 ? width / 2 : MARGIN + i * spacing))
 
     const reqX = new Map<string, number>()
     groups.forEach((g) => {
@@ -105,15 +112,15 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
       reqX.set(g.label, xs.reduce((a, b) => a + b, 0) / xs.length)
     })
 
-    const specX = WIDTH / 2
+    const specX = width / 2
     const hasSupport = Boolean(pdfAnalysis)
-    const supportX = WIDTH - 90
+    const supportX = width - 90
 
-    return { columns, colX, groups, reqX, specX, hasSupport, supportX }
+    return { columns, colX, groups, reqX, specX, hasSupport, supportX, width }
   }, [items, pdfAnalysis])
 
   if (!layout) return null
-  const { columns, colX, groups, reqX, specX, hasSupport, supportX } = layout
+  const { columns, colX, groups, reqX, specX, hasSupport, supportX, width } = layout
 
   const supportLines = pdfAnalysis
     ? [
@@ -157,8 +164,9 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
 
         <svg
           ref={svgRef}
-          viewBox={`0 0 ${WIDTH} 560`}
-          className="h-[520px] min-w-[820px] w-full cursor-grab touch-none active:cursor-grabbing"
+          viewBox={`0 0 ${width} 560`}
+          preserveAspectRatio="xMidYMid meet"
+          className="h-[520px] w-full cursor-grab touch-none active:cursor-grabbing"
           role="img"
           aria-label="Normative graph from procurement specification to compliance requirements"
           onWheel={handleWheel}
@@ -167,7 +175,7 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
         >
-          <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`} style={{ transformOrigin: `${WIDTH / 2}px 280px` }}>
+          <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`} style={{ transformOrigin: `${width / 2}px 280px` }}>
 
             {/* spec -> requirement edges */}
             {groups.map((g) => (

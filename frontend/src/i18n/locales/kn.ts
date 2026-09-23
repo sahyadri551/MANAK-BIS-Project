@@ -48,6 +48,7 @@ export const kn: Record<string, string> = {
   "pdf.tooLarge": "PDF ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ.",
   "pdf.maxSize": "ಗರಿಷ್ಠ ಅನುಮತಿಸಲಾದ ಗಾತ್ರ 20 MB.",
   "pdf.attached": "PDF ಲಗತ್ತಿಸಲಾಗಿದೆ",
+  'filter.status': 'ಸ್ಥಿತಿ',
   'filter.department': 'ಇಲಾಖೆ',
   'filter.aspect': 'ಅಂಶ',
   'filter.all': 'ಎಲ್ಲಾ',

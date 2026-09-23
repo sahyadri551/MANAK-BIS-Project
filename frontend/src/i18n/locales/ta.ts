@@ -48,6 +48,7 @@ export const ta: Record<string, string> = {
   "pdf.tooLarge": "PDF மிகவும் பெரியது.",
   "pdf.maxSize": "அனுமதிக்கப்பட்ட அதிகபட்ச அளவு 20 MB.",
   "pdf.attached": "PDF இணைக்கப்பட்டது",
+  'filter.status': 'நிலை',
   'filter.department': 'துறை',
   'filter.aspect': 'அம்சம்',
   'filter.all': 'அனைத்தும்',

@@ -48,6 +48,7 @@ export const te: Record<string, string> = {
   "pdf.tooLarge": "PDF చాలా పెద్దది.",
   "pdf.maxSize": "గరిష్ఠ పరిమాణం 20 MB.",
   "pdf.attached": "PDF జోడించబడింది",
+  'filter.status': 'స్థితి',
   'filter.department': 'విభాగం',
   'filter.aspect': 'అంశం',
   'filter.all': 'అన్నీ',
