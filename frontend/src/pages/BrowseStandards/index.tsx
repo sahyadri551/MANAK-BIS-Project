@@ -6,6 +6,8 @@ import { Loader } from '../../components/common/Loader'
 import { getBrowseOptions } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import { labelFor } from '../../i18n/dataLabels'
+import { DIMENSION_COLORS } from '../../utils/constants'
+import { cn } from '../../utils/cn'
 
 type Item = { value: string; label: string; count: number }
 type Dimension = { key: 'department' | 'aspect' | 'group' | 'ministry'; title: string; items: Item[]; icon: typeof Layers3 }
@@ -50,11 +52,13 @@ export default function BrowseStandards() {
         <p className="mt-1 max-w-3xl text-sm text-slate-500">{t('browse.subtitle')}</p>
       </div>
 
-      {loading ? <Loader /> : dimensions.map(({ key, title, items, icon: Icon }) => (
-        <section key={key} className="panel p-5 sm:p-6">
+      {loading ? <Loader /> : dimensions.map(({ key, title, items, icon: Icon }) => {
+        const c = DIMENSION_COLORS[key]
+        return (
+        <section key={key} data-testid={`browse-section-${key}`} className="panel p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Icon className="h-5 w-5 text-accent" />
+              <Icon className={cn('h-5 w-5', c.icon)} />
               <h2 className="font-display text-lg font-semibold text-slate-100">{title}</h2>
             </div>
             <span className="text-xs text-slate-500">{items.length} {t('browse.categories')}</span>
@@ -62,12 +66,12 @@ export default function BrowseStandards() {
           {items.length === 0 ? (
             <p className="text-sm text-slate-500">{t('browse.empty')}</p>
           ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
               {items.map((item) => (
                 <Link
                   key={item.value}
                   to={`/search-standards?${key}=${encodeURIComponent(item.value)}`}
-                  className="group flex items-center justify-between gap-3 rounded-xl border border-hairline bg-base/20 px-4 py-3 transition-colors hover:border-accent/40 hover:bg-surface-2/60"
+                  className="group flex items-center justify-between gap-3 rounded-md border border-hairline bg-base/20 px-4 py-3 transition-colors hover:border-accent/40 hover:bg-surface-2/60"
                   data-testid={`browse-${key}-${item.value}`}
                 >
                   <div className="min-w-0">
@@ -80,7 +84,8 @@ export default function BrowseStandards() {
             </div>
           )}
         </section>
-      ))}
+        )
+      })}
     </div>
   )
 }

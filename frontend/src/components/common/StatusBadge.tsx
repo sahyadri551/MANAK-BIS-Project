@@ -4,9 +4,9 @@ import { STATUS_STYLES } from '../../utils/constants'
 import type { StandardStatus } from '../../types/standard'
 
 const DOT: Record<string, string> = {
-  Active: 'bg-emerald-400',
-  Withdrawn: 'bg-red-400',
-  Draft: 'bg-amber-400',
+  Active: 'bg-ratified',
+  Withdrawn: 'bg-flagged',
+  Draft: 'bg-accent',
   Superseded: 'bg-slate-400',
 }
 

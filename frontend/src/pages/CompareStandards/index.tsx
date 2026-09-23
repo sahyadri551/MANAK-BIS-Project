@@ -169,12 +169,12 @@ export default function CompareStandards() {
         ) : items.length === 0 ? (
           <div className="mt-5"><EmptyState icon={Search} title={t('results.none')} /></div>
         ) : (
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
             {items.map((item) => {
               const checked = selectedIds.includes(item.id)
               return (
-                <label key={item.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${checked ? 'border-accent/50 bg-accent/10' : 'border-hairline bg-base/20 hover:border-accent/30'}`}>
-                  <input type="checkbox" checked={checked} onChange={() => toggleSelected(item.id)} className="mt-1 h-4 w-4 rounded border-slate-500 bg-transparent accent-blue-500" />
+                <label key={item.id} className={`flex cursor-pointer items-start gap-3 rounded-md border p-5 transition-colors ${checked ? 'border-accent/50 bg-accent/10' : 'border-hairline bg-base/20 hover:border-accent/30'}`}>
+                  <input type="checkbox" checked={checked} onChange={() => toggleSelected(item.id)} className="mt-1 h-4 w-4 rounded border-slate-500 bg-transparent accent-accent" />
                   <span className="min-w-0">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-sm font-semibold text-accent">{item.is_number}</span>

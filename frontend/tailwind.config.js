@@ -9,17 +9,20 @@ export default {
         surface: 'rgb(var(--c-surface) / <alpha-value>)',
         'surface-2': 'rgb(var(--c-surface-2) / <alpha-value>)',
         hairline: 'rgb(var(--c-hairline) / <alpha-value>)',
+        // App accent color.
         accent: { DEFAULT: '#3B82F6', hover: '#2563EB' },
-        signal: '#10B981',
+        // Ink-stamp colors for standard status, in place of neon SaaS greens/reds.
+        ratified: '#5C8768',
+        flagged: '#A6482F',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Outfit', 'sans-serif'],
+        sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        display: ['"Source Serif 4"', 'serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       boxShadow: {
-        panel: '0 1px 0 rgba(255,255,255,0.03) inset, 0 12px 40px -12px rgba(0,0,0,0.6)',
-        glow: '0 0 0 1px rgba(59,130,246,0.4), 0 8px 30px -6px rgba(59,130,246,0.35)',
+        panel: '0 1px 0 rgba(255,255,255,0.02) inset, 0 1px 0 rgba(0,0,0,0.4)',
+        glow: '0 0 0 1px rgba(59,130,246,0.35), 0 8px 30px -10px rgba(59,130,246,0.3)',
       },
       keyframes: {
         'fade-up': {

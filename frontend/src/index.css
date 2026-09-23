@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,24 +7,25 @@
 :root,
 html.dark {
   color-scheme: dark;
-  --c-base: 11 14 20;
-  --c-surface: 18 23 33;
-  --c-surface-2: 26 32 44;
-  --c-hairline: 33 43 58;
+  /* Warm charcoal ledger tones, not blue-black. */
+  --c-base: 18 17 15;
+  --c-surface: 28 25 22;
+  --c-surface-2: 38 34 29;
+  --c-hairline: 56 50 43;
   --grid-line: rgba(255, 255, 255, 0.02);
-  --glow-a: rgba(59, 130, 246, 0.08);
-  --glow-b: rgba(16, 185, 129, 0.06);
+  --glow-a: rgba(190, 138, 52, 0.07);
+  --glow-b: rgba(92, 135, 104, 0.05);
 }
 
 html.light {
   color-scheme: light;
-  --c-base: 244 246 249;
-  --c-surface: 255 255 255;
-  --c-surface-2: 237 241 246;
-  --c-hairline: 222 228 236;
-  --grid-line: rgba(15, 23, 42, 0.035);
-  --glow-a: rgba(59, 130, 246, 0.1);
-  --glow-b: rgba(16, 185, 129, 0.08);
+  --c-base: 247 244 238;
+  --c-surface: 255 253 250;
+  --c-surface-2: 240 235 227;
+  --c-hairline: 224 216 202;
+  --grid-line: rgba(35, 30, 20, 0.035);
+  --glow-a: rgba(190, 138, 52, 0.08);
+  --glow-b: rgba(92, 135, 104, 0.07);
 }
 
 /* Safety net so the page background always tracks the theme even if a
@@ -51,21 +52,44 @@ body {
 }
 
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(190, 138, 52, 0.3);
   color: rgb(var(--c-base));
 }
 
-/* In light mode remap the dark-tuned slate text scale to readable dark inks. */
-html.light .text-slate-100 { color: #0f172a; }
-html.light .text-slate-200 { color: #1e293b; }
-html.light .text-slate-300 { color: #334155; }
-html.light .text-slate-400 { color: #475569; }
-html.light .text-slate-500 { color: #64748b; }
-html.light .text-slate-600 { color: #94a3b8; }
-html.light .text-slate-800 { color: #cbd5e1; }
-html.light .border-slate-700 { border-color: #e2e8f0; }
-html.light .bg-slate-800 { background-color: #e2e8f0; }
-html.light .text-blue-200 { color: #1d4ed8; }
+/* Force-kill the blue top/left border on the "कुल मानक" stat card and the
+   "विभाग" browse section only — does not touch any other element. */
+[data-testid="stat-total"] {
+  border-color: rgb(var(--c-hairline)) !important;
+}
+
+/* Replace the browser's default blue focus ring with the app's gold
+   accent, so cards/sections don't flash a stock blue outline. */
+:focus-visible {
+  outline: 2px solid rgb(190 138 52 / 0.6);
+  outline-offset: 2px;
+}
+
+/* Remap the cool blue-gray slate scale to warm stone inks so text sits with
+   the charcoal/gold ledger palette instead of reading as a generic dark UI. */
+html.dark .text-slate-100 { color: #F2EEE7; }
+html.dark .text-slate-200 { color: #DDD6C9; }
+html.dark .text-slate-300 { color: #B7AE9D; }
+html.dark .text-slate-400 { color: #948A78; }
+html.dark .text-slate-500 { color: #756C5D; }
+html.dark .text-slate-600 { color: #5C544A; }
+html.dark .border-slate-700 { border-color: #453F37; }
+html.dark .bg-slate-800 { background-color: #26221D; }
+
+html.light .text-slate-100 { color: #23201A; }
+html.light .text-slate-200 { color: #332E26; }
+html.light .text-slate-300 { color: #4A4438; }
+html.light .text-slate-400 { color: #6B6455; }
+html.light .text-slate-500 { color: #8B8272; }
+html.light .text-slate-600 { color: #A69C8A; }
+html.light .text-slate-800 { color: #D8D0C0; }
+html.light .border-slate-700 { border-color: #E4DCCC; }
+html.light .bg-slate-800 { background-color: #E4DCCC; }
+html.light .text-blue-200 { color: #8A5F1F; }
 
 ::-webkit-scrollbar {
   width: 10px;
@@ -82,11 +106,14 @@ html.light .text-blue-200 { color: #1d4ed8; }
 }
 
 @layer components {
+  /* Flat, bordered "index card" panel — a register entry, not a glassy SaaS
+     tile. A hairline top rule reads as a document edge instead of a shadow. */
   .panel {
-    @apply rounded-xl border border-hairline bg-surface/80 backdrop-blur-md shadow-panel;
+    @apply rounded-md border border-hairline bg-surface;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
   html.light .panel {
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 40px -18px rgba(15, 23, 42, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
   .grid-noise {
     background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
@@ -94,7 +121,7 @@ html.light .text-blue-200 { color: #1d4ed8; }
     background-size: 32px 32px;
   }
   .field {
-    @apply w-full rounded-lg border border-hairline bg-base/60 px-3 py-2.5 text-sm text-slate-200
+    @apply w-full rounded-md border border-hairline bg-base/60 px-3 py-2.5 text-sm text-slate-200
       placeholder:text-slate-500 outline-none transition-colors
       focus:border-accent/70 focus:ring-1 focus:ring-accent/40;
   }
