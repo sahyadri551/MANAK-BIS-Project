@@ -65,6 +65,24 @@ export interface RecommendResponse {
   pdf_analysis?: PdfAnalysisSummary | null
 }
 
+export interface SummaryRequestItem {
+  standard_id: number
+  score: number
+  matched_requirements: string[]
+}
+
+export interface SummaryRequest {
+  query: string
+  lang: string
+  items: SummaryRequestItem[]
+}
+
+export interface SummaryResponse {
+  available: boolean
+  overall: string
+  per_standard: Record<string, string>
+}
+
 export type SimilarityMapPoint = {
   standard_id: number
   is_number: string

@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     #   gemini/gemini-1.5-flash  (free tier, default)
     #   openai/gpt-4o-mini
     translation_model: str = "gemini/gemini-1.5-flash"
-
+    llm_model: str = ""
     @property
     def cors_origin_list(self) -> list[str]:
         return [

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, Link2 } from 'lucide-react'
+import { ArrowUpRight, Link2, Sparkles } from 'lucide-react'
 
 import { StatusBadge } from '../common/StatusBadge'
 import { ScoreBadge } from '../common/ScoreBadge'
@@ -15,9 +15,19 @@ type Props = {
   selected: boolean
   onToggleCompare: () => void
   returnTo?: string
+  aiSummary?: string
+  aiSummaryLoading?: boolean
 }
 
-export function RecommendationCard({ item, index, selected, onToggleCompare, returnTo = '/recommendation' }: Props) {
+export function RecommendationCard({
+  item,
+  index,
+  selected,
+  onToggleCompare,
+  returnTo = '/recommendation',
+  aiSummary,
+  aiSummaryLoading = false,
+}: Props) {
   const { t, lang } = useI18n()
   const allied = item.allied_standards?.length ? item.allied_standards : item.related_standards
   const counts = Object.entries(
@@ -80,6 +90,26 @@ export function RecommendationCard({ item, index, selected, onToggleCompare, ret
       </div>
 
       <p className="mt-4 text-sm leading-relaxed text-slate-400">{item.reason}</p>
+
+      {(aiSummaryLoading || aiSummary) && (
+        <div
+          data-testid={`ai-summary-${item.is_number}`}
+          className="mt-3 rounded-lg border border-accent/15 bg-accent/[0.04] p-3"
+        >
+          <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-accent/80">
+            <Sparkles className="h-3 w-3" />
+            {t('card.aiSummary')}
+          </div>
+          {aiSummaryLoading ? (
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-full animate-pulse rounded bg-slate-500/15" />
+              <div className="h-2.5 w-3/4 animate-pulse rounded bg-slate-500/15" />
+            </div>
+          ) : (
+            <p className="text-xs leading-relaxed text-slate-300">{aiSummary}</p>
+          )}
+        </div>
+      )}
 
       {item.matched_requirements.length > 0 && (
         <div className="mt-3">
