@@ -9,14 +9,15 @@ import { Loader } from '../../components/common/Loader'
 import { getRecommendations } from '../../services/recommendationApi'
 import { invalidateSearchHistory } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
-import type { RecommendationFilters, RecommendationItem, SimilarityMapPoint } from '../../types/recommendation'
+import type { PdfAnalysisSummary, RecommendationFilters, RecommendationItem, SimilarityMapPoint } from '../../types/recommendation'
 import { SimilarityMap } from '../../components/recommendation/SimilarityMap'
-import { SemanticMatchChart } from '../../components/recommendation/SemanticMatchChart'
+import { SemanticMatchDonutGrid } from '../../components/recommendation/SemanticMatchDonutGrid'
+import { NormativeGraph } from '../../components/recommendation/NormativeGraph'
 
 const NO_FILTERS: RecommendationFilters = { status: null, department: null, aspect: null }
 const RECOMMENDATION_SESSION_KEY = 'manak-bis-recommendation-state'
 
-type SavedRecommendationState = { query: string; filters: RecommendationFilters; results: RecommendationItem[]; similarityMap: SimilarityMapPoint[]; requestId: string | null }
+type SavedRecommendationState = { query: string; filters: RecommendationFilters; results: RecommendationItem[]; similarityMap: SimilarityMapPoint[]; requestId: string | null; pdfAnalysis: PdfAnalysisSummary | null }
 
 export default function Recommendation() {
   const location = useLocation()
@@ -29,6 +30,7 @@ export default function Recommendation() {
   const [loading, setLoading] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [similarityMap, setSimilarityMap] = useState<SimilarityMapPoint[]>([])
+  const [pdfAnalysis, setPdfAnalysis] = useState<PdfAnalysisSummary | null>(null)
 
   function saveRecommendationState(next: SavedRecommendationState) {
     try {
@@ -57,7 +59,8 @@ export default function Recommendation() {
       setSelectedIds(new Set())
       setSimilarityMap(res.similarity_map ?? [])
       setRequestId(res.request_id)
-      saveRecommendationState({ query: q, filters, results: res.recommendations, similarityMap: res.similarity_map ?? [], requestId: res.request_id })
+      setPdfAnalysis(res.pdf_analysis ?? null)
+      saveRecommendationState({ query: q, filters, results: res.recommendations, similarityMap: res.similarity_map ?? [], requestId: res.request_id, pdfAnalysis: res.pdf_analysis ?? null })
       invalidateSearchHistory()
       toast.success(`${res.recommendations.length} ${t('results.toast')}`)
     } catch {
@@ -81,6 +84,7 @@ export default function Recommendation() {
       setResults(saved.results)
       setSimilarityMap(saved.similarityMap || [])
       setRequestId(saved.requestId || null)
+      setPdfAnalysis(saved.pdfAnalysis || null)
     }
     // The initial load intentionally restores state or handles a navigation query.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,8 +112,8 @@ export default function Recommendation() {
   }
 
   return (
-    <div data-testid="recommendation-page" className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_1fr]">
-      <div className="space-y-5">
+    <div data-testid="recommendation-page" className="space-y-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="panel p-5"><SpecForm query={query} onQueryChange={setQuery} onSubmit={() => run()} loading={loading} /></div>
         <div className="panel space-y-4 p-5">
           <div className="flex items-center gap-2 text-slate-300"><SlidersHorizontal className="h-4 w-4 text-accent" /><h3 className="font-display text-sm font-semibold">Filters</h3></div>
@@ -121,9 +125,10 @@ export default function Recommendation() {
           <div className="panel flex h-full min-h-[300px] flex-col items-center justify-center p-8 text-center"><h2 className="font-display text-xl font-semibold text-slate-200">{t('results.ready')}</h2><p className="mt-2 max-w-md text-sm text-slate-500">{t('results.readyDesc')}</p></div>
         ) : (
           <div className="space-y-4">
-            <SemanticMatchChart items={results} />
+            <SemanticMatchDonutGrid items={results} />
             <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-lg font-semibold text-slate-100">{results.length} {t('results.count')}</h2><div className="flex items-center gap-3">{selectedIds.size >= 2 && <button type="button" onClick={() => navigate(`/compare-standards?ids=${Array.from(selectedIds).join(',')}`)} className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20">Compare Selected ({selectedIds.size})</button>}{requestId && <span className="font-mono text-[11px] text-slate-600">req {requestId.slice(0, 8)}</span>}</div></div>
             <ResultsList items={results} selectedIds={selectedIds} onToggleCompare={toggleCompare} />
+            <NormativeGraph query={query} items={results} pdfAnalysis={pdfAnalysis} />
           </div>
         )}
         <SimilarityMap points={similarityMap} />

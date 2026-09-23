@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../../components/common/EmptyState'
 import { Loader } from '../../components/common/Loader'
 import { ComparisonPanel } from '../../components/recommendation/ComparisonPanel'
+import { ComparisonBarChart } from '../../components/recommendation/ComparisonBarChart'
 import { getStandard, listStandards } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import type { StandardDetail, StandardSummary } from '../../types/standard'
@@ -135,6 +136,7 @@ export default function CompareStandards() {
               </button>
             </div>
             <ComparisonPanel items={comparison} />
+            <ComparisonBarChart items={comparison} />
           </div>
         ) : (
           <div className="panel flex min-h-[220px] items-center justify-center p-8 text-center">

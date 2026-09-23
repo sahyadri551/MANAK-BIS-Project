@@ -37,18 +37,37 @@ const MAX_GRAPH_NODES_PER_CATEGORY = 8
 const MIN_SCALE = 0.6
 const MAX_SCALE = 3
 
-function nodePositions(count: number): Point[] {
-  if (count === 1) return [{ x: 500, y: 82 }]
-  const radius = count > 6 ? 245 : 220
-  return Array.from({ length: count }, (_, index) => {
-    const angle = (-Math.PI / 2) + (index * Math.PI * 2) / count
-    return { x: 500 + Math.cos(angle) * radius, y: 260 + Math.sin(angle) * radius * 0.72 }
-  })
+// Canvas geometry — all radii chosen so leaf nodes can never land closer to
+// the center than the anchor ring, no matter what angle they fall at.
+const CENTER: Point = { x: 520, y: 300 }
+const CENTER_R = 64
+const ANCHOR_R = 24
+const LEAF_R = 30
+const ANCHOR_RX = 190
+const ANCHOR_RY = 140
+const LEAF_RX = 380
+const LEAF_RY = 250
+
+function polar(angle: number, rx: number, ry: number): Point {
+  return { x: CENTER.x + Math.cos(angle) * rx, y: CENTER.y + Math.sin(angle) * ry }
 }
 
-function categoryAnchor(categoryIndex: number, categoryCount: number): Point {
-  const angle = (-Math.PI / 2) + (categoryIndex * Math.PI * 2) / Math.max(categoryCount, 1)
-  return { x: 500 + Math.cos(angle) * 150, y: 260 + Math.sin(angle) * 105 }
+function categoryAngle(categoryIndex: number, categoryCount: number): number {
+  return (-Math.PI / 2) + (categoryIndex * Math.PI * 2) / Math.max(categoryCount, 1)
+}
+
+// Spread a category's leaf nodes in a fan centered on that category's own
+// angle, rather than around the full circle — this keeps every leaf on the
+// outward-facing side of its anchor so it can't drift back toward the center.
+function leafAngles(anchorAngle: number, count: number): number[] {
+  if (count === 1) return [anchorAngle]
+  const perItemDeg = 24
+  const maxSpreadDeg = 150
+  const spreadDeg = Math.min(maxSpreadDeg, perItemDeg * (count - 1))
+  const spreadRad = (spreadDeg * Math.PI) / 180
+  const step = spreadRad / (count - 1)
+  const start = anchorAngle - spreadRad / 2
+  return Array.from({ length: count }, (_, i) => start + i * step)
 }
 
 export function AlliedStandardsNetwork({ standard, standards }: Props) {
@@ -118,13 +137,12 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
 
     grouped.forEach(({ category, items }, categoryIndex) => {
       const visibleItems = items.slice(0, MAX_GRAPH_NODES_PER_CATEGORY)
-      const anchor = categoryAnchor(categoryIndex, categoryCount)
-      const positions = nodePositions(visibleItems.length)
+      const anchorAngle = categoryAngle(categoryIndex, categoryCount)
+      const angles = leafAngles(anchorAngle, visibleItems.length)
       visibleItems.forEach((item, itemIndex) => {
-        const base = positions[itemIndex]
-        const point = { x: anchor.x + (base.x - 500) * 0.45, y: anchor.y + (base.y - 260) * 0.45 }
+        const point = polar(angles[itemIndex], LEAF_RX, LEAF_RY)
         nodes.push({ item, point, category })
-        edges.push({ from: { x: 500, y: 260 }, to: point, category })
+        edges.push({ from: CENTER, to: point, category })
       })
     })
 
@@ -184,8 +202,8 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
 
         <svg
           ref={svgRef}
-          viewBox="0 0 1000 520"
-          className="h-[460px] min-w-[760px] w-full cursor-grab touch-none active:cursor-grabbing"
+          viewBox="0 0 1040 640"
+          className="h-[560px] min-w-[820px] w-full cursor-grab touch-none active:cursor-grabbing"
           role="img"
           aria-label={`Allied standards network for ${standard.is_number}`}
           onWheel={handleWheel}
@@ -194,39 +212,39 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
         >
-          <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`} style={{ transformOrigin: '500px 260px' }}>
-            <circle cx="500" cy="260" r="95" fill="#60a5fa" fillOpacity="0.05" />
+          <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`} style={{ transformOrigin: `${CENTER.x}px ${CENTER.y}px` }}>
+            <circle cx={CENTER.x} cy={CENTER.y} r={CENTER_R + 45} fill="#60a5fa" fillOpacity="0.05" />
 
             {layout.edges.map((edge, index) => (
               <line key={`edge-${edge.category}-${index}`} x1={edge.from.x} y1={edge.from.y} x2={edge.to.x} y2={edge.to.y} stroke={CATEGORY_META[edge.category].stroke} strokeOpacity="0.35" strokeWidth="1.25" />
             ))}
 
             {grouped.map(({ category, items }, categoryIndex) => {
-              const anchor = categoryAnchor(categoryIndex, grouped.length)
+              const anchor = polar(categoryAngle(categoryIndex, grouped.length), ANCHOR_RX, ANCHOR_RY)
               const meta = CATEGORY_META[category]
               return (
                 <g key={`category-${category}`} tabIndex={0} className="outline-none">
-                  <circle cx={anchor.x} cy={anchor.y} r="18" fill={meta.stroke} fillOpacity="0.28" stroke={meta.stroke} strokeWidth="2" />
-                  <text x={anchor.x} y={anchor.y + 3} textAnchor="middle" fill="#0f172a" fontSize="9" fontWeight="700">{categoryIndex + 1}</text>
-                  <text x={anchor.x} y={anchor.y + 34} textAnchor="middle" fill="#94a3b8" fontSize="9">{meta.label}</text>
+                  <circle cx={anchor.x} cy={anchor.y} r={ANCHOR_R} fill={meta.stroke} fillOpacity="0.28" stroke={meta.stroke} strokeWidth="2" />
+                  <text x={anchor.x} y={anchor.y + 4} textAnchor="middle" fill="#0f172a" fontSize="12" fontWeight="700">{categoryIndex + 1}</text>
+                  <text x={anchor.x} y={anchor.y + ANCHOR_R + 16} textAnchor="middle" fill="#94a3b8" fontSize="10">{meta.label}</text>
                   <title>{`${meta.label} — ${items.length} standard${items.length === 1 ? '' : 's'}`}</title>
                 </g>
               )
             })}
 
             <g>
-              <circle cx="500" cy="260" r="50" fill="#0f172a" stroke="#60a5fa" strokeWidth="2" />
-              <text x="500" y="253" textAnchor="middle" fill="#60a5fa" fontSize="11" fontWeight="700">{standard.is_number}</text>
-              <text x="500" y="270" textAnchor="middle" fill="#cbd5e1" fontSize="9">Current Standard</text>
+              <circle cx={CENTER.x} cy={CENTER.y} r={CENTER_R} fill="#0f172a" stroke="#60a5fa" strokeWidth="2" />
+              <text x={CENTER.x} y={CENTER.y - 6} textAnchor="middle" fill="#60a5fa" fontSize="13" fontWeight="700">{standard.is_number}</text>
+              <text x={CENTER.x} y={CENTER.y + 13} textAnchor="middle" fill="#cbd5e1" fontSize="10">Current Standard</text>
             </g>
 
             {layout.nodes.map(({ item, point, category }) => {
               const meta = CATEGORY_META[category]
               return (
                 <g key={`${category}-${item.id}`} role="link" tabIndex={0} aria-label={`Open ${item.is_number}: ${item.title}`} className="cursor-pointer outline-none" onClick={() => navigate(`/standards/${item.id}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/standards/${item.id}`) } }}>
-                  <circle cx={point.x} cy={point.y} r="18" fill={meta.stroke} fillOpacity="0.22" stroke={meta.stroke} strokeWidth="2" />
-                  <text x={point.x} y={point.y - 2} textAnchor="middle" fill="#0f172a" fontSize="7.5" fontWeight="700">{item.is_number.length > 12 ? `${item.is_number.slice(0, 11)}…` : item.is_number}</text>
-                  <text x={point.x} y={point.y + 9} textAnchor="middle" fill={meta.stroke} fontSize="6.5" fontWeight="600">{item.status}</text>
+                  <text x={point.x} y={point.y - LEAF_R - 8} textAnchor="middle" fill="#1e293b" fontSize="11" fontWeight="700">{item.is_number.length > 16 ? `${item.is_number.slice(0, 15)}…` : item.is_number}</text>
+                  <circle cx={point.x} cy={point.y} r={LEAF_R} fill={meta.stroke} fillOpacity="0.22" stroke={meta.stroke} strokeWidth="2" />
+                  <text x={point.x} y={point.y + 4} textAnchor="middle" fill={meta.stroke} fontSize="9" fontWeight="600">{item.status}</text>
                   <title>{`${item.is_number} — ${item.title}`}</title>
                 </g>
               )

@@ -16,14 +16,15 @@ const MAIN = [
 
 const FOOT: typeof MAIN = []
 
-function item(collapsed: boolean, t: (k: string) => string) {
+function item(collapsed: boolean, t: (k: string) => string, onNavigate?: () => void, testPrefix = '') {
   return ({ to, key, icon: Icon, testId, end }: (typeof MAIN)[number]) => (
     <NavLink
       key={to}
       to={to}
       end={end}
       title={collapsed ? t(key) : undefined}
-      data-testid={testId}
+      data-testid={`${testPrefix}${testId}`}
+      onClick={onNavigate}
       className={({ isActive }) =>
         cn(
           'group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-colors',
@@ -42,9 +43,17 @@ function item(collapsed: boolean, t: (k: string) => string) {
   )
 }
 
-export function NavContent({ collapsed = false }: { collapsed?: boolean }) {
+export function NavContent({
+  collapsed = false,
+  onNavigate,
+  testPrefix = '',
+}: {
+  collapsed?: boolean
+  onNavigate?: () => void
+  testPrefix?: string
+}) {
   const { t } = useI18n()
-  const render = item(collapsed, t)
+  const render = item(collapsed, t, onNavigate, testPrefix)
   return (
     <div className="flex h-full flex-1 flex-col">
       <div className={cn('flex items-center gap-3 px-2', collapsed && 'justify-center px-0')}>

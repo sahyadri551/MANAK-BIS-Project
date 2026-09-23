@@ -40,7 +40,7 @@ export function ResultsList({
   return (
     <div
       data-testid="recommendation-results"
-      className="grid grid-cols-1 gap-4 xl:grid-cols-2"
+      className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
     >
       {items.map((item, i) => (
         <RecommendationCard

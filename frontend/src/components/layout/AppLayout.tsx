@@ -21,7 +21,9 @@ export function AppLayout() {
       <div className="grid-noise flex min-w-0 flex-1 flex-col">
         <Topbar onMenuClick={() => setMenuOpen(true)} />
         <main className="flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-8">
-          <Outlet />
+          <div className="mx-auto w-full max-w-[1600px]">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
