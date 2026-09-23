@@ -123,6 +123,8 @@ export const en: Record<string, string> = {
   'card.viewDetails': 'View details',
   'card.matchedRequirements': 'Matched requirements',
   'card.compare': 'Compare',
+  'card.aiSummary': 'AI insight',
+  'summary.overallTitle': 'AI Summary',
   'comparison.title': 'Compare Standards',
   'comparison.subtitle': 'Search the BIS catalogue and select two to four standards to compare side by side.',
   'comparison.searchPlaceholder': 'Search by IS number or standard title…',

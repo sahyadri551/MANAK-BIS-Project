@@ -11,6 +11,8 @@ type Props = {
   selectedIds?: Set<number>
   onToggleCompare?: (standardId: number) => void
   returnTo?: string
+  aiSummaries?: Record<string, string>
+  aiSummariesLoading?: boolean
 }
 
 export function ResultsList({
@@ -18,6 +20,8 @@ export function ResultsList({
   selectedIds = new Set<number>(),
   onToggleCompare,
   returnTo = '/recommendation',
+  aiSummaries,
+  aiSummariesLoading = false,
 }: Props) {
   const { t } = useI18n()
 
@@ -52,6 +56,8 @@ export function ResultsList({
             onToggleCompare?.(item.standard_id)
           }
           returnTo={returnTo}
+          aiSummary={aiSummaries?.[String(item.standard_id)]}
+          aiSummaryLoading={aiSummariesLoading && !aiSummaries?.[String(item.standard_id)]}
         />
       ))}
     </div>
