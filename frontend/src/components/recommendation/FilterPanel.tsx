@@ -19,13 +19,13 @@ export function FilterPanel({ value, onChange }: Props) {
   const { t, lang } = useI18n()
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div className="flex flex-col gap-5">
       {FIELDS.map(({ key, labelKey, testId, optionsKey }) => (
         <label key={key} className="block">
-          <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-slate-500">{t(labelKey)}</span>
+          <span className="mb-2 block font-mono text-[10px] uppercase tracking-widest text-slate-500">{t(labelKey)}</span>
           <select
             data-testid={testId}
-            className="field appearance-none"
+            className="field appearance-none py-3"
             value={value[key] ?? ''}
             onChange={(e) => onChange({ ...value, [key]: e.target.value || null })}
           >

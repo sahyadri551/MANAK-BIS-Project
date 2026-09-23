@@ -177,7 +177,7 @@ export default function Recommendation() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="panel p-5"><SpecForm query={query} onQueryChange={setQuery} onSubmit={() => run()} loading={loading} /></div>
         <div className="panel space-y-4 p-5">
-          <div className="flex items-center gap-2 text-slate-300"><SlidersHorizontal className="h-4 w-4 text-accent" /><h3 className="font-display text-sm font-semibold">Filters</h3></div>
+          <div className="flex items-center gap-2 text-slate-300"><SlidersHorizontal className="h-4 w-4 text-accent" /><h3 className="font-display text-sm font-semibold">{t('history.filters')}</h3></div>
           <FilterPanel value={filters} onChange={setFilters} />
         </div>
       </div>
@@ -187,15 +187,8 @@ export default function Recommendation() {
         ) : (
           <div className="space-y-4">
             <SemanticMatchDonutGrid items={results} />
-            <AiSummaryPanel loading={summaryLoading} overall={summaryOverall} />
             <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-lg font-semibold text-slate-100">{results.length} {t('results.count')}</h2><div className="flex items-center gap-3">{selectedIds.size >= 2 && <button type="button" onClick={() => navigate(`/compare-standards?ids=${Array.from(selectedIds).join(',')}`)} className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20">Compare Selected ({selectedIds.size})</button>}{requestId && <span className="font-mono text-[11px] text-slate-600">req {requestId.slice(0, 8)}</span>}</div></div>
-            <ResultsList
-              items={results}
-              selectedIds={selectedIds}
-              onToggleCompare={toggleCompare}
-              aiSummaries={summaryPerStandard}
-              aiSummariesLoading={summaryLoading}
-            />
+            <ResultsList items={results} selectedIds={selectedIds} onToggleCompare={toggleCompare} />
             <NormativeGraph query={query} items={results} pdfAnalysis={pdfAnalysis} />
           </div>
         )}
