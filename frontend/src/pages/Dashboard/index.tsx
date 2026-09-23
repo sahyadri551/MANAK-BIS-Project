@@ -5,7 +5,7 @@ import { DomainCoverageChart } from '../../components/dashboard/DomainCoverageCh
 import { RecentSearches } from '../../components/dashboard/RecentSearches'
 import { QuickSpec } from '../../components/dashboard/QuickSpec'
 import { Loader } from '../../components/common/Loader'
-import { getCachedSearchHistory, getCachedStats, getSearchHistory, getStats } from '../../services/standardsApi'
+import { getCachedSearchHistory, getCachedStats, getSearchHistory, getSearchHistoryCount, getStats } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import type { StatsOverview } from '../../types/standard'
 import type { SearchHistoryEntry } from '../../types/api'
@@ -16,13 +16,15 @@ export default function Dashboard() {
   const cachedHistory = getCachedSearchHistory(10)
   const [stats, setStats] = useState<StatsOverview | null>(cachedStats)
   const [history, setHistory] = useState<SearchHistoryEntry[]>(cachedHistory ?? [])
+  const [searchTotal, setSearchTotal] = useState<number | null>(null)
   const [loading, setLoading] = useState(!cachedStats)
 
   useEffect(() => {
-    Promise.all([getStats(lang), getSearchHistory(10)])
-      .then(([nextStats, nextHistory]) => {
+    Promise.all([getStats(lang), getSearchHistory(10), getSearchHistoryCount().catch(() => null)])
+      .then(([nextStats, nextHistory, total]) => {
         setStats(nextStats)
         setHistory(nextHistory)
+        setSearchTotal(total)
       })
       .finally(() => setLoading(false))
   }, [lang])
@@ -38,7 +40,7 @@ export default function Dashboard() {
         <StatCard testId="stat-total" icon={Database} label={t('dash.total')} value={stats.total} hint={t('dash.totalHint')} />
         <StatCard testId="stat-active" icon={Gauge} label={t('dash.active')} value={activeCount} accent="text-emerald-400" hint={t('dash.activeHint')} />
         <StatCard testId="stat-aspects" icon={Layers} label={t('dash.aspects')} value={aspectCount} accent="text-cyan-400" hint={t('dash.aspectsHint')} />
-        <StatCard testId="stat-searches" icon={Search} label={t('dash.searches')} value={history.length} accent="text-amber-400" hint={t('dash.searchesHint')} />
+        <StatCard testId="stat-searches" icon={Search} label={t('dash.searches')} value={searchTotal ?? history.length} accent="text-amber-400" hint={t('dash.searchesHint')} />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">

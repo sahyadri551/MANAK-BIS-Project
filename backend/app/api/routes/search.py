@@ -11,3 +11,8 @@ router = APIRouter(prefix="/search", tags=["search"])
 @router.get("/history", response_model=list[SearchHistoryEntry])
 def history(limit: int = Query(50, le=200), db: Session = Depends(get_db)):
     return SearchService(db).history(limit=limit)
+
+
+@router.get("/history/count")
+def history_count(db: Session = Depends(get_db)):
+    return {"total": SearchService(db).count()}

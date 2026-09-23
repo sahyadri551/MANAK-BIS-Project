@@ -84,7 +84,7 @@ export const en: Record<string, string> = {
   'dash.totalHint': 'Across all focus domains',
   'dash.activeHint': 'Currently in force',
   'dash.domainsHint': 'Cement · Textiles · Electronics · Food',
-  'dash.searchesHint': 'Recent recommendation runs',
+  'dash.searchesHint': 'Total recommendation runs',
   'dash.coverage': 'Coverage by Domain',
   'dash.standards': 'standards',
   'dash.recent': 'Recent Searches',

@@ -29,13 +29,16 @@ const METRICS: Array<{ key: string; label: string; value: (item: StandardDetail)
 export function ComparisonBarChart({ items }: Props) {
   if (items.length < 2) return null
 
-  const chartData = METRICS.map((metric) => {
-    const row: Record<string, string | number> = { metric: metric.label }
-    items.forEach((item) => {
-      row[item.is_number] = metric.value(item)
+  const chartData = METRICS
+    // Requirements is hidden when none of the compared standards has any; shown otherwise.
+    .filter((metric) => metric.key !== 'requirements' || items.some((item) => metric.value(item) > 0))
+    .map((metric) => {
+      const row: Record<string, string | number> = { metric: metric.label }
+      items.forEach((item) => {
+        row[item.is_number] = metric.value(item)
+      })
+      return row
     })
-    return row
-  })
 
   return (
     <section className="panel overflow-hidden p-5">

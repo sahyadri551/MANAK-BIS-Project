@@ -1,4 +1,4 @@
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.search_history import SearchHistory
@@ -25,3 +25,6 @@ class SearchService:
         stmt = select(SearchHistory).order_by(desc(SearchHistory.created_at)).limit(limit)
         rows = self.db.execute(stmt).scalars().all()
         return [SearchHistoryEntry.model_validate(row) for row in rows]
+
+    def count(self) -> int:
+        return self.db.execute(select(func.count(SearchHistory.id))).scalar_one()

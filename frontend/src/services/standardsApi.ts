@@ -164,3 +164,8 @@ export async function getBrowseOptions(lang: string): Promise<BrowseResponse> {
   const { data } = await api.get('/standards/meta/browse', { params: { lang } })
   return data
 }
+
+export async function getSearchHistoryCount(): Promise<number> {
+  const { data } = await api.get('/search/history/count')
+  return data.total as number
+}
