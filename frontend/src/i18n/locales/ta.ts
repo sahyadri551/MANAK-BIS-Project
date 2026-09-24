@@ -1,4 +1,6 @@
 export const ta: Record<string, string> = {
+  'summary.overallTitle': 'AI சுருக்கம்',
+  'filter.title': 'வடிகட்டிகள்',
   'topbar.searchPlaceholder': 'IS எண், தலைப்பு அல்லது முக்கிய சொல்லால் தரநிலைகளைத் தேடுங்கள்…',
   'nav.newRec': 'புதிய பரிந்துரை',
   'nav.searchStd': 'தரநிலைகளைத் தேடுக',

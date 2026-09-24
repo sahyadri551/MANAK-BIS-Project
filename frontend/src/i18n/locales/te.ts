@@ -1,4 +1,6 @@
 export const te: Record<string, string> = {
+  'summary.overallTitle': 'AI సారాంశం',
+  'filter.title': 'ఫిల్టర్లు',
   'topbar.searchPlaceholder': 'IS సంఖ్య, శీర్షిక లేదా కీవర్డ్ ద్వారా ప్రమాణాలను శోధించండి…',
   'nav.newRec': 'కొత్త సిఫార్సు',
   'nav.searchStd': 'ప్రమాణాలను శోధించండి',

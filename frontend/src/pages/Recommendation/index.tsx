@@ -177,7 +177,7 @@ export default function Recommendation() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="panel p-5"><SpecForm query={query} onQueryChange={setQuery} onSubmit={() => run()} loading={loading} /></div>
         <div className="panel space-y-4 p-5">
-          <div className="flex items-center gap-2 text-slate-300"><SlidersHorizontal className="h-4 w-4 text-accent" /><h3 className="font-display text-sm font-semibold">Filters</h3></div>
+          <div className="flex items-center gap-2 text-slate-300"><SlidersHorizontal className="h-4 w-4 text-accent" /><h3 className="font-display text-sm font-semibold">{t('filter.title')}</h3></div>
           <FilterPanel value={filters} onChange={setFilters} />
         </div>
       </div>

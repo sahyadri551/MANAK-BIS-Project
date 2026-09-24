@@ -1,4 +1,6 @@
 export const pa: Record<string, string> = {
+  'summary.overallTitle': 'AI ਸਾਰ',
+  'filter.title': 'ਫਿਲਟਰ',
   'topbar.searchPlaceholder': 'IS ਨੰਬਰ, ਸਿਰਲੇਖ ਜਾਂ ਕੀਵਰਡ ਰਾਹੀਂ ਮਿਆਰ ਖੋਜੋ…',
   'nav.newRec': 'ਨਵੀਂ ਸਿਫ਼ਾਰਸ਼',
   'nav.searchStd': 'ਮਿਆਰ ਖੋਜੋ',

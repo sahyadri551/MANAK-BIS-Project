@@ -1,4 +1,6 @@
 export const ml: Record<string, string> = {
+  'summary.overallTitle': 'AI സംഗ്രഹം',
+  'filter.title': 'ഫിൽട്ടറുകൾ',
   'topbar.searchPlaceholder': 'IS നമ്പർ, ശീർഷകം അല്ലെങ്കിൽ കീവേഡ് ഉപയോഗിച്ച് മാനദണ്ഡങ്ങൾ തിരയുക…',
   'nav.newRec': 'പുതിയ ശുപാർശ',
   'nav.searchStd': 'മാനദണ്ഡങ്ങൾ തിരയുക',

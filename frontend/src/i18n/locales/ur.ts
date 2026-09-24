@@ -1,4 +1,6 @@
 export const ur: Record<string, string> = {
+  'summary.overallTitle': 'AI خلاصہ',
+  'filter.title': 'فلٹرز',
   'topbar.searchPlaceholder': 'IS نمبر، عنوان یا کلیدی لفظ سے معیارات تلاش کریں…',
   'nav.newRec': 'نئی سفارش',
   'nav.searchStd': 'معیارات تلاش کریں',

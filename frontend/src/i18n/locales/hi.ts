@@ -1,4 +1,6 @@
 export const hi: Record<string, string> = {
+  'summary.overallTitle': 'AI सारांश',
+  'filter.title': 'फ़िल्टर',
   'topbar.searchPlaceholder': 'IS नंबर, शीर्षक या कीवर्ड से मानक खोजें…',
   'nav.newRec': 'नई अनुशंसा',
   "nav.pdfAnalysis": "पीडीएफ विश्लेषण",
