@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { MobileDrawer } from './MobileDrawer'
+import { FloatingChatbot } from '../common/FloatingChatbot'
 
 export function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -26,6 +27,7 @@ export function AppLayout() {
           </div>
         </main>
       </div>
+      <FloatingChatbot />
     </div>
   )
 }

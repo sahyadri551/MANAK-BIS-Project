@@ -43,5 +43,8 @@ def llm_complete(
         text = (response.choices[0].message.content or "").strip()
         return text or None
     except Exception as exc:  # noqa: BLE001
-        logger.warning("LLM call failed (%s: %s)", type(exc).__name__, exc)
+        logger.error(
+            "LLM call failed for model=%s (%s: %s)",
+            resolve_model(), type(exc).__name__, exc, exc_info=True,
+        )
         return None
