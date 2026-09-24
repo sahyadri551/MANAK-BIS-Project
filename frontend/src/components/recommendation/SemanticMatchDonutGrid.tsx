@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import type { RecommendationItem } from '../../types/recommendation'
@@ -44,9 +44,54 @@ function arcPath(cx: number, cy: number, r: number, startDeg: number, endDeg: nu
   return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y}`
 }
 
+// Picks the column count (capped at `maxCols`, the most that physically fit
+// the container) that leaves the rows as even as possible, preferring a
+// perfectly even split and otherwise the option with the fewest empty slots
+// in the final row. This avoids CSS auto-fit's behavior of always packing
+// the max number per row regardless of an awkward leftover (e.g. 7+3 for
+// 10 items instead of a balanced 5+5).
+function getBalancedColumns(count: number, maxCols: number): number {
+  if (count <= 0) return 1
+  if (count <= maxCols) return count
+
+  let best = maxCols
+  let bestEmptySlots = Infinity
+  for (let cols = maxCols; cols >= 1; cols--) {
+    const rows = Math.ceil(count / cols)
+    const emptySlots = rows * cols - count
+    if (emptySlots < bestEmptySlots) {
+      bestEmptySlots = emptySlots
+      best = cols
+    }
+    if (emptySlots === 0) break
+  }
+  return best
+}
+
 export function SemanticMatchDonutGrid({ items }: Props) {
   const { lang } = useI18n()
   const navigate = useNavigate()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [columns, setColumns] = useState(1)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const recompute = (width: number) => {
+      const maxCols = Math.max(1, Math.floor(width / CELL))
+      setColumns(getBalancedColumns(items.length, maxCols))
+    }
+
+    recompute(el.clientWidth)
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width
+      if (width) recompute(width)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [items.length])
 
   if (items.length === 0) return null
 
@@ -86,12 +131,15 @@ export function SemanticMatchDonutGrid({ items }: Props) {
         </span>
       </div>
 
-      {/* Responsive grid: each donut is its own small SVG sized by its cell,
-          so items reflow and stay evenly spaced at any viewport width
-          instead of one fixed-pixel chart that either stretches or scrolls. */}
+      {/* Responsive grid: each donut is its own small SVG sized by its cell.
+          Column count is computed from the measured container width and
+          balanced so rows split as evenly as possible (e.g. 5+5 rather than
+          7+3 for 10 items), instead of CSS auto-fit greedily maxing out the
+          first row and dumping the remainder into a sparse last row. */}
       <div
+        ref={containerRef}
         className="grid justify-items-center gap-y-6"
-        style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${CELL}px, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, ${CELL}px))`, justifyContent: 'center' }}
       >
         {chartData.map((entry) => {
           const t = (entry.score - min) / ((max - min) || 1)
