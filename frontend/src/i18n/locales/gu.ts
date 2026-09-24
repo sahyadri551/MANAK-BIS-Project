@@ -1,4 +1,6 @@
 export const gu: Record<string, string> = {
+  'summary.overallTitle': 'AI સારાંશ',
+  'filter.title': 'ફિલ્ટર',
   'topbar.searchPlaceholder': 'IS નંબર, શીર્ષક અથવા કીવર્ડ દ્વારા ધોરણો શોધો…',
   'nav.newRec': 'નવી ભલામણ',
   'nav.searchStd': 'ધોરણો શોધો',

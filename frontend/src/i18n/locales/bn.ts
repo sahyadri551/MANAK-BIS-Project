@@ -1,4 +1,6 @@
 export const bn: Record<string, string> = {
+  'summary.overallTitle': 'AI সারসংক্ষেপ',
+  'filter.title': 'ফিল্টার',
   'topbar.searchPlaceholder': 'IS নম্বর, শিরোনাম বা কীওয়ার্ড দিয়ে মান খুঁজুন…',
   'nav.newRec': 'নতুন সুপারিশ',
   'nav.searchStd': 'মান খুঁজুন',

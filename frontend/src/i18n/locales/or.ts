@@ -1,4 +1,6 @@
 export const or: Record<string, string> = {
+  'summary.overallTitle': 'AI ସାରାଂଶ',
+  'filter.title': 'ଫିଲ୍ଟର',
   'topbar.searchPlaceholder': 'IS ନମ୍ବର, ଶୀର୍ଷକ କିମ୍ବା କୀୱାର୍ଡ ଦ୍ୱାରା ମାନକ ଖୋଜନ୍ତୁ…',
   'nav.newRec': 'ନୂଆ ସୁପାରିଶ',
   'nav.searchStd': 'ମାନକ ଖୋଜନ୍ତୁ',

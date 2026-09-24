@@ -1,4 +1,6 @@
 export const mr: Record<string, string> = {
+  'summary.overallTitle': 'AI सारांश',
+  'filter.title': 'फिल्टर',
   'topbar.searchPlaceholder': 'IS क्रमांक, शीर्षक किंवा कीवर्डद्वारे मानके शोधा…',
   'nav.newRec': 'नवीन शिफारस',
   'nav.searchStd': 'मानके शोधा',

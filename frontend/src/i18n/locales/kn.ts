@@ -1,4 +1,6 @@
 export const kn: Record<string, string> = {
+  'summary.overallTitle': 'AI ಸಾರಾಂಶ',
+  'filter.title': 'ಫಿಲ್ಟರ್‌ಗಳು',
   'topbar.searchPlaceholder': 'IS ಸಂಖ್ಯೆ, ಶೀರ್ಷಿಕೆ ಅಥವಾ ಕೀವರ್ಡ್ ಮೂಲಕ ಮಾನದಂಡಗಳನ್ನು ಹುಡುಕಿ…',
   'nav.newRec': 'ಹೊಸ ಶಿಫಾರಸು',
   'nav.searchStd': 'ಮಾನದಂಡಗಳನ್ನು ಹುಡುಕಿ',

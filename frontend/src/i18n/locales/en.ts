@@ -1,4 +1,6 @@
 export const en: Record<string, string> = {
+  'summary.overallTitle': 'AI Summary',
+  'filter.title': 'Filters',
   'nav.standards': 'Standards',
   'nav.slogan': 'Build a Safer, Stronger, Smarter India',
   'nav.version': 'Version 1.0.0',
