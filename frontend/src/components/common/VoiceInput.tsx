@@ -121,9 +121,47 @@ export function VoiceInput({ onTranscript, onSessionStart, onSessionEnd, disable
       onClick={listening ? stopListening : startListening}
       disabled={disabled}
       aria-label={listening ? labels.stop : labels.start}
-      className="inline-flex items-center gap-2 rounded-lg border border-hairline bg-surface-2/40 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:border-accent/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+      className={`
+        group relative inline-flex min-w-[104px] items-center justify-center gap-2 overflow-hidden rounded-full px-4 py-2 text-xs font-semibold
+        transition-all duration-300 ease-out disabled:cursor-not-allowed disabled:opacity-40
+        ${listening
+          ? 'bg-gradient-to-r from-rose-500 to-orange-400 text-white shadow-[0_0_0_4px_rgba(244,63,94,0.15),0_8px_20px_-6px_rgba(244,63,94,0.6)]'
+          : 'bg-gradient-to-r from-accent to-indigo-500 text-white shadow-[0_4px_14px_-4px_rgba(99,102,241,0.5)] hover:shadow-[0_6px_20px_-4px_rgba(99,102,241,0.7)] hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95'
+        }
+      `}
     >
-      {listening ? <><Square className="h-3.5 w-3.5" />{labels.listening}</> : <><Mic className="h-3.5 w-3.5" />{labels.start}</>}
+      {/* animated ring while listening */}
+      {listening && (
+        <span className="absolute inset-0 rounded-full">
+          <span className="absolute inset-0 animate-ping rounded-full bg-rose-400/50" />
+        </span>
+      )}
+
+      {/* subtle sheen sweep on hover (idle state) */}
+      {!listening && (
+        <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+      )}
+
+      <span className="relative flex items-center justify-center gap-2 whitespace-nowrap">
+        {listening ? (
+          <>
+            <Square className="h-3.5 w-3.5 fill-current" />
+            <span className="flex items-center gap-1">
+              {labels.listening}
+              <span className="flex gap-0.5">
+                <span className="h-1 w-1 animate-bounce rounded-full bg-white [animation-delay:-0.3s]" />
+                <span className="h-1 w-1 animate-bounce rounded-full bg-white [animation-delay:-0.15s]" />
+                <span className="h-1 w-1 animate-bounce rounded-full bg-white" />
+              </span>
+            </span>
+          </>
+        ) : (
+          <>
+            <Mic className="h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-110" />
+            {labels.start}
+          </>
+        )}
+      </span>
     </button>
   )
 }
