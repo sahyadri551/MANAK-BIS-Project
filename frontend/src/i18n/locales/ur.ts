@@ -63,6 +63,7 @@ export const ur: Record<string, string> = {
   'results.error': 'سفارشات حاصل نہیں ہو سکیں۔ کیا بیک اینڈ چل رہا ہے؟',
   'card.related': 'متعلقہ',
   'card.viewDetails': 'تفصیلات دیکھیں',
+  'card.aiSummary': 'AI خلاصہ',
   'score.match': 'مماثلت',
   'details.back': 'سفارشات کی طرف واپس جائیں',
   'details.scope': 'دائرہ کار',

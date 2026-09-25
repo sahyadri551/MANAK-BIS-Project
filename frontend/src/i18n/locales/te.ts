@@ -63,6 +63,7 @@ export const te: Record<string, string> = {
   'results.error': 'సిఫార్సులను పొందలేకపోయాము. బ్యాకెండ్ నడుస్తోందా?',
   'card.related': 'సంబంధిత',
   'card.viewDetails': 'వివరాలు చూడండి',
+  'card.aiSummary': 'AI సారాంశం',
   'score.match': 'మ్యాచ్',
   'details.back': 'సిఫార్సులకు తిరిగి వెళ్లండి',
   'details.scope': 'పరిధి',

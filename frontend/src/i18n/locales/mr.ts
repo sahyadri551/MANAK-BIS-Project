@@ -63,6 +63,7 @@ export const mr: Record<string, string> = {
   'results.error': 'शिफारसी मिळू शकल्या नाहीत. बॅकएंड चालू आहे का?',
   'card.related': 'संबंधित',
   'card.viewDetails': 'तपशील पहा',
+  'card.aiSummary': 'एआय सारांश',
   'score.match': 'जुळणी',
   'details.back': 'शिफारसींकडे परत जा',
   'details.scope': 'व्याप्ती',

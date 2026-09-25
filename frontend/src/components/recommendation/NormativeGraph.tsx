@@ -2,6 +2,8 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GitBranch, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import { useI18n } from '../../i18n'
+import type { Lang } from '../../i18n'
+import { labelFor } from '../../i18n/dataLabels'
 import type { PdfAnalysisSummary, RecommendationItem } from '../../types/recommendation'
 
 type Props = {
@@ -39,10 +41,16 @@ function truncate(text: string, max: number) {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text
 }
 
-function requirementLabel(item: RecommendationItem, fallback: string): string {
+function requirementLabel(item: RecommendationItem, fallback: string, lang: Lang): string {
   const matched = item.matched_requirements?.[0]
   if (matched) return truncate(matched, 40)
-  return truncate(item.aspect || item.department || item.group || fallback, 40)
+  // aspect/department/group are raw backend category values — route them
+  // through the same translation dictionary the rest of the app uses for
+  // these fields, so the node label follows the selected language too.
+  if (item.aspect) return truncate(labelFor('aspects', item.aspect, lang), 40)
+  if (item.department) return truncate(labelFor('departments', item.department, lang), 40)
+  if (item.group) return truncate(labelFor('groups', item.group, lang), 40)
+  return truncate(fallback, 40)
 }
 
 // Scheme acronyms (ISI, CRS) are proper names and stay as-is; the words around them are localized.
@@ -58,11 +66,32 @@ function fill(text: string, n: number): string {
   return text.replace('{n}', String(n))
 }
 
+// Smooth vertical S-curve between two points — reads as a much more
+// deliberate "org chart" connector than a straight line, and its midpoint
+// bend gives edges a clear direction as they fan out.
+function curvedLink(x1: number, y1: number, x2: number, y2: number): string {
+  const midY = (y1 + y2) / 2
+  return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`
+}
+
+// What's currently under the pointer. Hovering a node highlights its whole
+// branch (ancestors + descendants); everything else dims.
+type HoverKey =
+  | { kind: 'spec' }
+  | { kind: 'support' }
+  | { kind: 'group'; label: string }
+  | { kind: 'column'; index: number }
+  | null
+
+const DIM_OPACITY = 0.16
+const DIM_TEXT_OPACITY = 0.35
+
 export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
   const navigate = useNavigate()
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const generalLabel = t('ng.general')
   const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 })
+  const [hovered, setHovered] = useState<HoverKey>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 })
 
@@ -98,7 +127,7 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
     // Group by requirement label so items sharing a requirement fan out from one node.
     const buckets = new Map<string, RecommendationItem[]>()
     for (const item of trimmed) {
-      const label = requirementLabel(item, generalLabel)
+      const label = requirementLabel(item, generalLabel, lang)
       const list = buckets.get(label) ?? []
       list.push(item)
       buckets.set(label, list)
@@ -125,10 +154,40 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
     const supportX = width - 90
 
     return { columns, colX, groups, reqX, specX, hasSupport, supportX, width }
-  }, [items, pdfAnalysis, generalLabel])
+  }, [items, pdfAnalysis, generalLabel, lang])
 
   if (!layout) return null
   const { columns, colX, groups, reqX, specX, hasSupport, supportX, width } = layout
+
+  // Branch-highlight helpers — nothing hovered means everything reads at
+  // full strength; hovering any node keeps the root plus that node's whole
+  // branch bright and dims the rest.
+  const groupOf = (i: number) => columns[i].reqLabel
+  const groupActive = (label: string) =>
+    !hovered ||
+    hovered.kind === 'spec' ||
+    (hovered.kind === 'group' && hovered.label === label) ||
+    (hovered.kind === 'column' && groupOf(hovered.index) === label)
+  const columnActive = (i: number) =>
+    !hovered ||
+    hovered.kind === 'spec' ||
+    (hovered.kind === 'group' && hovered.label === groupOf(i)) ||
+    (hovered.kind === 'column' && hovered.index === i)
+  const supportActive = !hovered || hovered.kind === 'spec' || hovered.kind === 'support'
+  const isHovered = (key: HoverKey) =>
+    Boolean(hovered && key && hovered.kind === key.kind &&
+      ((key.kind === 'group' && hovered.kind === 'group' && hovered.label === key.label) ||
+        (key.kind === 'column' && hovered.kind === 'column' && hovered.index === key.index) ||
+        key.kind === 'spec' || key.kind === 'support'))
+  const nodeStyle = (active: boolean, hoveredNode: boolean) => ({
+    opacity: active ? 1 : DIM_OPACITY,
+    filter: hoveredNode ? 'url(#ngNodeGlow)' : undefined,
+    transition: 'opacity 180ms ease, filter 180ms ease, transform 180ms ease',
+  })
+  const edgeStyle = (active: boolean) => ({
+    opacity: active ? 1 : DIM_OPACITY,
+    transition: 'opacity 180ms ease',
+  })
 
   const supportLines = pdfAnalysis
     ? [
@@ -183,42 +242,78 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
         >
+          <defs>
+            {/* Soft glow applied only to the node directly under the pointer,
+                so it reads as the focal point of its highlighted branch. */}
+            <filter id="ngNodeGlow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`} style={{ transformOrigin: `${width / 2}px 280px` }}>
 
             {/* spec -> requirement edges */}
             {groups.map((g) => (
-              <line key={`spec-req-${g.label}`} x1={specX} y1={SPEC_Y + NODE_H / 2} x2={reqX.get(g.label)} y2={REQ_Y - NODE_H / 2} stroke={NODE_META.requirement.stroke} strokeOpacity="0.5" strokeWidth="1.5" />
+              <path
+                key={`spec-req-${g.label}`}
+                d={curvedLink(specX, SPEC_Y + NODE_H / 2, reqX.get(g.label) ?? specX, REQ_Y - NODE_H / 2)}
+                fill="none"
+                stroke={NODE_META.requirement.stroke}
+                strokeWidth={groupActive(g.label) ? 2 : 1.5}
+                style={edgeStyle(groupActive(g.label))}
+              />
             ))}
             {groups.length > 0 && (
-              <text x={(specX + (reqX.get(groups[0].label) ?? specX)) / 2 - 40} y={(SPEC_Y + REQ_Y) / 2} fontSize="9" fill="#94a3b8">{t('ng.requires')}</text>
+              <text x={(specX + (reqX.get(groups[0].label) ?? specX)) / 2 - 40} y={(SPEC_Y + REQ_Y) / 2} fontSize="9" fill="#94a3b8" style={edgeStyle(groupActive(groups[0].label))}>{t('ng.requires')}</text>
             )}
 
             {/* requirement -> standard edges */}
             {columns.map((c, i) => (
-              <line key={`req-std-${i}`} x1={reqX.get(c.reqLabel)} y1={REQ_Y + NODE_H / 2} x2={colX[i]} y2={STD_Y - NODE_H / 2} stroke={NODE_META.standard.stroke} strokeOpacity="0.5" strokeWidth="1.5" />
+              <path
+                key={`req-std-${i}`}
+                d={curvedLink(reqX.get(c.reqLabel) ?? specX, REQ_Y + NODE_H / 2, colX[i], STD_Y - NODE_H / 2)}
+                fill="none"
+                stroke={NODE_META.standard.stroke}
+                strokeWidth={columnActive(i) ? 2 : 1.5}
+                style={edgeStyle(columnActive(i))}
+              />
             ))}
             {columns.length > 0 && (
-              <text x={colX[0] + 8} y={(REQ_Y + STD_Y) / 2} fontSize="9" fill="#94a3b8">{t('ng.mappedTo')}</text>
+              <text x={colX[0] + 8} y={(REQ_Y + STD_Y) / 2} fontSize="9" fill="#94a3b8" style={edgeStyle(columnActive(0))}>{t('ng.mappedTo')}</text>
             )}
 
             {/* standard -> compliance edges */}
             {columns.map((_, i) => (
-              <line key={`std-comp-${i}`} x1={colX[i]} y1={STD_Y + NODE_H / 2} x2={colX[i]} y2={COMP_Y - NODE_H / 2} stroke={NODE_META.compliance.stroke} strokeOpacity="0.5" strokeWidth="1.5" />
+              <path
+                key={`std-comp-${i}`}
+                d={curvedLink(colX[i], STD_Y + NODE_H / 2, colX[i], COMP_Y - NODE_H / 2)}
+                fill="none"
+                stroke={NODE_META.compliance.stroke}
+                strokeWidth={columnActive(i) ? 2 : 1.5}
+                style={edgeStyle(columnActive(i))}
+              />
             ))}
             {columns.length > 0 && (
-              <text x={colX[0] + 8} y={(STD_Y + COMP_Y) / 2} fontSize="9" fill="#94a3b8">{t('ng.leadsTo')}</text>
+              <text x={colX[0] + 8} y={(STD_Y + COMP_Y) / 2} fontSize="9" fill="#94a3b8" style={edgeStyle(columnActive(0))}>{t('ng.leadsTo')}</text>
             )}
 
             {/* spec -> support dashed edge */}
             {hasSupport && (
               <>
-                <line x1={specX + NODE_W / 2} y1={SPEC_Y} x2={supportX - NODE_W / 2} y2={SPEC_Y} stroke={NODE_META.support.stroke} strokeOpacity="0.5" strokeWidth="1.5" strokeDasharray="5 4" />
-                <text x={(specX + supportX) / 2 - 30} y={SPEC_Y - 8} fontSize="9" fill="#94a3b8">{t('ng.references')}</text>
+                <line x1={specX + NODE_W / 2} y1={SPEC_Y} x2={supportX - NODE_W / 2} y2={SPEC_Y} stroke={NODE_META.support.stroke} strokeWidth={supportActive ? 2 : 1.5} strokeDasharray="5 4" style={edgeStyle(supportActive)} />
+                <text x={(specX + supportX) / 2 - 30} y={SPEC_Y - 8} fontSize="9" fill="#94a3b8" style={edgeStyle(supportActive)}>{t('ng.references')}</text>
               </>
             )}
 
             {/* spec node */}
-            <g>
+            <g
+              onMouseEnter={() => setHovered({ kind: 'spec' })}
+              onMouseLeave={() => setHovered(null)}
+              style={{ ...nodeStyle(true, isHovered({ kind: 'spec' })), transformOrigin: `${specX}px ${SPEC_Y}px`, transform: isHovered({ kind: 'spec' }) ? 'scale(1.04)' : undefined }}
+            >
               <rect x={specX - NODE_W / 2} y={SPEC_Y - NODE_H / 2} width={NODE_W} height={NODE_H} rx="12" fill={NODE_META.spec.fill} fillOpacity="0.9" stroke={NODE_META.spec.stroke} strokeWidth="2" />
               <text x={specX} y={SPEC_Y - 6} textAnchor="middle" fontSize="9" fontWeight="700" fill={NODE_META.spec.text}>{t(NODE_META.spec.labelKey)}</text>
               <text x={specX} y={SPEC_Y + 12} textAnchor="middle" fontSize="8" fill={NODE_META.spec.text} opacity="0.85">{truncate(query, 34)}</text>
@@ -227,7 +322,11 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
 
             {/* support node */}
             {hasSupport && (
-              <g>
+              <g
+                onMouseEnter={() => setHovered({ kind: 'support' })}
+                onMouseLeave={() => setHovered(null)}
+                style={{ ...nodeStyle(supportActive, isHovered({ kind: 'support' })), transformOrigin: `${supportX}px ${SPEC_Y}px`, transform: isHovered({ kind: 'support' }) ? 'scale(1.04)' : undefined }}
+              >
                 <rect x={supportX - NODE_W / 2} y={SPEC_Y - NODE_H / 2} width={NODE_W} height={NODE_H} rx="12" fill={NODE_META.support.fill} fillOpacity="0.9" stroke={NODE_META.support.stroke} strokeWidth="2" />
                 <text x={supportX} y={SPEC_Y - 6} textAnchor="middle" fontSize="9" fontWeight="700" fill={NODE_META.support.text}>{t(NODE_META.support.labelKey)}</text>
                 <text x={supportX} y={SPEC_Y + 12} textAnchor="middle" fontSize="7.5" fill={NODE_META.support.text} opacity="0.85">{truncate(supportLines[0] || t('ng.fromPdf'), 30)}</text>
@@ -238,8 +337,15 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
             {/* requirement nodes */}
             {groups.map((g) => {
               const x = reqX.get(g.label) ?? specX
+              const active = groupActive(g.label)
+              const hoveredNode = isHovered({ kind: 'group', label: g.label })
               return (
-                <g key={`req-node-${g.label}`}>
+                <g
+                  key={`req-node-${g.label}`}
+                  onMouseEnter={() => setHovered({ kind: 'group', label: g.label })}
+                  onMouseLeave={() => setHovered(null)}
+                  style={{ ...nodeStyle(active, hoveredNode), transformOrigin: `${x}px ${REQ_Y}px`, transform: hoveredNode ? 'scale(1.04)' : undefined }}
+                >
                   <rect x={x - NODE_W / 2} y={REQ_Y - NODE_H / 2} width={NODE_W} height={NODE_H} rx="12" fill={NODE_META.requirement.fill} fillOpacity="0.9" stroke={NODE_META.requirement.stroke} strokeWidth="2" />
                   <text x={x} y={REQ_Y - 6} textAnchor="middle" fontSize="8.5" fontWeight="700" fill={NODE_META.requirement.text}>{truncate(g.label, 26)}</text>
                   <text x={x} y={REQ_Y + 12} textAnchor="middle" fontSize="7.5" fill={NODE_META.requirement.text} opacity="0.85">{fill(t('ng.count'), g.items.length)}</text>
@@ -249,24 +355,47 @@ export function NormativeGraph({ query, items, pdfAnalysis }: Props) {
             })}
 
             {/* standard nodes */}
-            {columns.map(({ item }, i) => (
-              <g key={`std-node-${item.standard_id}`} role="link" tabIndex={0} className="cursor-pointer outline-none" onClick={() => navigate(`/standards/${item.standard_id}`)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/standards/${item.standard_id}`) } }}>
-                <rect x={colX[i] - NODE_W / 2} y={STD_Y - NODE_H / 2} width={NODE_W} height={NODE_H} rx="12" fill={NODE_META.standard.fill} fillOpacity="0.9" stroke={NODE_META.standard.stroke} strokeWidth="2" />
-                <text x={colX[i]} y={STD_Y - 6} textAnchor="middle" fontSize="9" fontWeight="700" fill={NODE_META.standard.text}>{item.is_number}</text>
-                <text x={colX[i]} y={STD_Y + 12} textAnchor="middle" fontSize="7.5" fill={NODE_META.standard.text} opacity="0.85">{truncate(item.title, 28)}</text>
-                <title>{`${item.is_number} — ${item.title}`}</title>
-              </g>
-            ))}
+            {columns.map(({ item }, i) => {
+              const active = columnActive(i)
+              const hoveredNode = isHovered({ kind: 'column', index: i })
+              return (
+                <g
+                  key={`std-node-${item.standard_id}`}
+                  role="link"
+                  tabIndex={0}
+                  className="cursor-pointer outline-none"
+                  onClick={() => navigate(`/standards/${item.standard_id}`)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/standards/${item.standard_id}`) } }}
+                  onMouseEnter={() => setHovered({ kind: 'column', index: i })}
+                  onMouseLeave={() => setHovered(null)}
+                  style={{ ...nodeStyle(active, hoveredNode), transformOrigin: `${colX[i]}px ${STD_Y}px`, transform: hoveredNode ? 'scale(1.04)' : undefined }}
+                >
+                  <rect x={colX[i] - NODE_W / 2} y={STD_Y - NODE_H / 2} width={NODE_W} height={NODE_H} rx="12" fill={NODE_META.standard.fill} fillOpacity="0.9" stroke={NODE_META.standard.stroke} strokeWidth="2" />
+                  <text x={colX[i]} y={STD_Y - 6} textAnchor="middle" fontSize="9" fontWeight="700" fill={NODE_META.standard.text}>{item.is_number}</text>
+                  <text x={colX[i]} y={STD_Y + 12} textAnchor="middle" fontSize="7.5" fill={NODE_META.standard.text} opacity="0.85">{truncate(item.title, 28)}</text>
+                  <title>{`${item.is_number} — ${item.title}`}</title>
+                </g>
+              )
+            })}
 
             {/* compliance nodes */}
-            {columns.map(({ item }, i) => (
-              <g key={`comp-node-${item.standard_id}`}>
-                <rect x={colX[i] - NODE_W / 2} y={COMP_Y - NODE_H / 2} width={NODE_W} height={NODE_H} rx="12" fill={NODE_META.compliance.fill} fillOpacity="0.9" stroke={NODE_META.compliance.stroke} strokeWidth="2" />
-                <text x={colX[i]} y={COMP_Y - 6} textAnchor="middle" fontSize="8" fontWeight="700" fill={NODE_META.compliance.text}>{t('ng.complianceShort')}</text>
-                <text x={colX[i]} y={COMP_Y + 12} textAnchor="middle" fontSize="7.5" fill={NODE_META.compliance.text} opacity="0.85">{truncate(complianceLabel(item, t), 30)}</text>
-                <title>{complianceLabel(item, t)}</title>
-              </g>
-            ))}
+            {columns.map(({ item }, i) => {
+              const active = columnActive(i)
+              const hoveredNode = isHovered({ kind: 'column', index: i })
+              return (
+                <g
+                  key={`comp-node-${item.standard_id}`}
+                  onMouseEnter={() => setHovered({ kind: 'column', index: i })}
+                  onMouseLeave={() => setHovered(null)}
+                  style={{ ...nodeStyle(active, hoveredNode), transformOrigin: `${colX[i]}px ${COMP_Y}px`, transform: hoveredNode ? 'scale(1.04)' : undefined }}
+                >
+                  <rect x={colX[i] - NODE_W / 2} y={COMP_Y - NODE_H / 2} width={NODE_W} height={NODE_H} rx="12" fill={NODE_META.compliance.fill} fillOpacity="0.9" stroke={NODE_META.compliance.stroke} strokeWidth="2" />
+                  <text x={colX[i]} y={COMP_Y - 6} textAnchor="middle" fontSize="8" fontWeight="700" fill={NODE_META.compliance.text}>{t('ng.complianceShort')}</text>
+                  <text x={colX[i]} y={COMP_Y + 12} textAnchor="middle" fontSize="7.5" fill={NODE_META.compliance.text} opacity="0.85">{truncate(complianceLabel(item, t), 30)}</text>
+                  <title>{complianceLabel(item, t)}</title>
+                </g>
+              )
+            })}
           </g>
         </svg>
       </div>

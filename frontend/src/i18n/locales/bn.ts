@@ -63,6 +63,7 @@ export const bn: Record<string, string> = {
   'results.error': 'সুপারিশ আনা যায়নি। ব্যাকএন্ড চলছে কি?',
   'card.related': 'সম্পর্কিত',
   'card.viewDetails': 'বিবরণ দেখুন',
+  'card.aiSummary': 'এআই সারাংশ',
   'score.match': 'মিল',
   'details.back': 'সুপারিশে ফিরুন',
   'details.scope': 'পরিধি',

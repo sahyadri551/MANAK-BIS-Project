@@ -63,6 +63,7 @@ export const kn: Record<string, string> = {
   'results.error': 'ಶಿಫಾರಸುಗಳನ್ನು ಪಡೆಯಲಾಗಲಿಲ್ಲ. ಬ್ಯಾಕೆಂಡ್ ಚಾಲನೆಯಲ್ಲಿದೆಯೇ?',
   'card.related': 'ಸಂಬಂಧಿತ',
   'card.viewDetails': 'ವಿವರಗಳನ್ನು ನೋಡಿ',
+  'card.aiSummary': 'AI ಸಾರಾಂಶ',
   'score.match': 'ಹೊಂದಾಣಿಕೆ',
   'details.back': 'ಶಿಫಾರಸುಗಳಿಗೆ ಹಿಂತಿರುಗಿ',
   'details.scope': 'ವ್ಯಾಪ್ತಿ',

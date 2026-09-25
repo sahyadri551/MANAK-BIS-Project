@@ -63,6 +63,7 @@ export const pa: Record<string, string> = {
   'results.error': 'ਸਿਫ਼ਾਰਸ਼ਾਂ ਪ੍ਰਾਪਤ ਨਹੀਂ ਹੋ ਸਕੀਆਂ। ਕੀ ਬੈਕਐਂਡ ਚੱਲ ਰਿਹਾ ਹੈ?',
   'card.related': 'ਸੰਬੰਧਿਤ',
   'card.viewDetails': 'ਵੇਰਵੇ ਵੇਖੋ',
+  'card.aiSummary': 'AI ਸਾਰ',
   'score.match': 'ਮੇਲ',
   'details.back': "ਸਿਫ਼ਾਰਸ਼ਾਂ 'ਤੇ ਵਾਪਸ ਜਾਓ",
   'details.scope': 'ਦਾਇਰਾ',

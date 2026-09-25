@@ -63,6 +63,7 @@ export const gu: Record<string, string> = {
   'results.error': 'ભલામણો મેળવી શકાયા નહીં. શું બેકએન્ડ ચાલી રહ્યું છે?',
   'card.related': 'સંબંધિત',
   'card.viewDetails': 'વિગતો જુઓ',
+  'card.aiSummary': 'AI સારાંશ',
   'score.match': 'મેચ',
   'details.back': 'ભલામણો પર પાછા જાઓ',
   'details.scope': 'અવકાશ',

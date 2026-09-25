@@ -63,6 +63,7 @@ export const ml: Record<string, string> = {
   'results.error': 'ശുപാർശകൾ ലഭിക്കാനായില്ല. ബാക്കെൻഡ് പ്രവർത്തിക്കുന്നുണ്ടോ?',
   'card.related': 'ബന്ധപ്പെട്ടത്',
   'card.viewDetails': 'വിശദാംശങ്ങൾ കാണുക',
+  'card.aiSummary': 'AI സംഗ്രഹം',
   'score.match': 'പൊരുത്തം',
   'details.back': 'ശുപാർശകളിലേക്ക് മടങ്ങുക',
   'details.scope': 'വ്യാപ്തി',

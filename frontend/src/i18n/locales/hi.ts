@@ -66,6 +66,7 @@ export const hi: Record<string, string> = {
   'card.viewDetails': 'विवरण देखें',
   'card.matchedRequirements': 'मिलान की गई आवश्यकताएँ',
   'card.compare': 'तुलना करें',
+  'card.aiSummary': 'एआई सारांश',
   'score.match': 'मिलान',
   'voice.start': 'वॉइस इनपुट शुरू करें',
   'voice.stop': 'वॉइस इनपुट रोकें',

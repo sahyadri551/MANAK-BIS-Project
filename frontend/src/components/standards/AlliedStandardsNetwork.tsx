@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Network, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import type { AlliedStandardCategory, RelatedStandard } from '../../types/standard'
+import { useTheme } from '../../hooks/useTheme'
 
 type Props = {
   standard: {
@@ -39,14 +40,18 @@ const MAX_SCALE = 3
 
 // Canvas geometry — all radii chosen so leaf nodes can never land closer to
 // the center than the anchor ring, no matter what angle they fall at.
-const CENTER: Point = { x: 520, y: 300 }
+const CENTER: Point = { x: 600, y: 420 }
 const CENTER_R = 64
 const ANCHOR_R = 24
-const LEAF_R = 30
-const ANCHOR_RX = 190
-const ANCHOR_RY = 140
-const LEAF_RX = 380
-const LEAF_RY = 250
+const LEAF_R = 28
+const ANCHOR_RX = 210
+const ANCHOR_RY = 165
+const LEAF_RX = 430
+const LEAF_RY = 290
+// Leaves past the third in a category are pushed onto this wider ring in an
+// alternating (near/far) pattern, so dense categories get real breathing
+// room instead of only relying on angle to keep circles apart.
+const LEAF_RING_GAP = 55
 
 function polar(angle: number, rx: number, ry: number): Point {
   return { x: CENTER.x + Math.cos(angle) * rx, y: CENTER.y + Math.sin(angle) * ry }
@@ -59,12 +64,14 @@ function categoryAngle(categoryIndex: number, categoryCount: number): number {
 // Spread a category's leaf nodes in a fan centered on that category's own
 // angle, rather than around the full circle — this keeps every leaf on the
 // outward-facing side of its anchor so it can't drift back toward the center.
-function leafAngles(anchorAngle: number, count: number): number[] {
+// The fan is also clamped to a share of that category's own slice of the
+// circle (sectorRad), so a category with lots of items can never spread far
+// enough to bleed into — and overlap — its neighbors' nodes.
+function leafAngles(anchorAngle: number, count: number, sectorRad: number): number[] {
   if (count === 1) return [anchorAngle]
-  const perItemDeg = 24
-  const maxSpreadDeg = 150
-  const spreadDeg = Math.min(maxSpreadDeg, perItemDeg * (count - 1))
-  const spreadRad = (spreadDeg * Math.PI) / 180
+  const perItemRad = (24 * Math.PI) / 180
+  const maxSpreadRad = Math.min((150 * Math.PI) / 180, sectorRad * 0.82)
+  const spreadRad = Math.min(maxSpreadRad, perItemRad * (count - 1))
   const step = spreadRad / (count - 1)
   const start = anchorAngle - spreadRad / 2
   return Array.from({ length: count }, (_, i) => start + i * step)
@@ -72,6 +79,13 @@ function leafAngles(anchorAngle: number, count: number): number[] {
 
 export function AlliedStandardsNetwork({ standard, standards }: Props) {
   const navigate = useNavigate()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  // Labels that sit directly on the panel background (not inside a colored
+  // node) need theme-aware colors — a fixed dark navy reads fine in light
+  // mode but disappears against a dark panel.
+  const labelColor = isDark ? '#e2e8f0' : '#1e293b'
+  const mutedLabelColor = isDark ? '#94a3b8' : '#64748b'
 
   // --- pan/zoom state ---
   const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 })
@@ -134,13 +148,19 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
     const nodes: Array<{ item: RelatedStandard; point: Point; category: AlliedStandardCategory }> = []
     const edges: Array<{ from: Point; to: Point; category: AlliedStandardCategory }> = []
     const categoryCount = grouped.length
+    const sectorRad = (Math.PI * 2) / Math.max(categoryCount, 1)
 
     grouped.forEach(({ category, items }, categoryIndex) => {
       const visibleItems = items.slice(0, MAX_GRAPH_NODES_PER_CATEGORY)
       const anchorAngle = categoryAngle(categoryIndex, categoryCount)
-      const angles = leafAngles(anchorAngle, visibleItems.length)
+      const angles = leafAngles(anchorAngle, visibleItems.length, sectorRad)
       visibleItems.forEach((item, itemIndex) => {
-        const point = polar(angles[itemIndex], LEAF_RX, LEAF_RY)
+        // Once a category has more than 3 leaves, alternate every other one
+        // onto a wider ring so tightly angled neighbors don't touch.
+        const onFarRing = visibleItems.length > 3 && itemIndex % 2 === 1
+        const rx = LEAF_RX + (onFarRing ? LEAF_RING_GAP : 0)
+        const ry = LEAF_RY + (onFarRing ? LEAF_RING_GAP : 0)
+        const point = polar(angles[itemIndex], rx, ry)
         nodes.push({ item, point, category })
         edges.push({ from: CENTER, to: point, category })
       })
@@ -202,8 +222,8 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
 
         <svg
           ref={svgRef}
-          viewBox="0 0 1040 640"
-          className="h-[560px] min-w-[820px] w-full cursor-grab touch-none active:cursor-grabbing"
+          viewBox="0 0 1200 860"
+          className="h-[600px] min-w-[860px] w-full cursor-grab touch-none active:cursor-grabbing"
           role="img"
           aria-label={`Allied standards network for ${standard.is_number}`}
           onWheel={handleWheel}
@@ -224,9 +244,13 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
               const meta = CATEGORY_META[category]
               return (
                 <g key={`category-${category}`} tabIndex={0} className="outline-none">
-                  <circle cx={anchor.x} cy={anchor.y} r={ANCHOR_R} fill={meta.stroke} fillOpacity="0.28" stroke={meta.stroke} strokeWidth="2" />
-                  <text x={anchor.x} y={anchor.y + 4} textAnchor="middle" fill="#0f172a" fontSize="12" fontWeight="700">{categoryIndex + 1}</text>
-                  <text x={anchor.x} y={anchor.y + ANCHOR_R + 16} textAnchor="middle" fill="#94a3b8" fontSize="10">{meta.label}</text>
+                  {/* Soft halo behind the solid badge, purely decorative. */}
+                  <circle cx={anchor.x} cy={anchor.y} r={ANCHOR_R + 6} fill={meta.stroke} fillOpacity="0.18" />
+                  {/* Solid, fully-opaque badge so the number stays readable
+                      against both light and dark panel backgrounds. */}
+                  <circle cx={anchor.x} cy={anchor.y} r={ANCHOR_R} fill={meta.stroke} stroke={meta.stroke} strokeWidth="2" />
+                  <text x={anchor.x} y={anchor.y + 4} textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="700">{categoryIndex + 1}</text>
+                  <text x={anchor.x} y={anchor.y + ANCHOR_R + 16} textAnchor="middle" fill={mutedLabelColor} fontSize="10">{meta.label}</text>
                   <title>{`${meta.label} — ${items.length} standard${items.length === 1 ? '' : 's'}`}</title>
                 </g>
               )
@@ -242,8 +266,8 @@ export function AlliedStandardsNetwork({ standard, standards }: Props) {
               const meta = CATEGORY_META[category]
               return (
                 <g key={`${category}-${item.id}`} role="link" tabIndex={0} aria-label={`Open ${item.is_number}: ${item.title}`} className="cursor-pointer outline-none" onClick={() => navigate(`/standards/${item.id}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/standards/${item.id}`) } }}>
-                  <text x={point.x} y={point.y - LEAF_R - 8} textAnchor="middle" fill="#1e293b" fontSize="11" fontWeight="700">{item.is_number.length > 16 ? `${item.is_number.slice(0, 15)}…` : item.is_number}</text>
-                  <circle cx={point.x} cy={point.y} r={LEAF_R} fill={meta.stroke} fillOpacity="0.22" stroke={meta.stroke} strokeWidth="2" />
+                  <text x={point.x} y={point.y - LEAF_R - 8} textAnchor="middle" fill={labelColor} fontSize="11" fontWeight="700">{item.is_number.length > 16 ? `${item.is_number.slice(0, 15)}…` : item.is_number}</text>
+                  <circle cx={point.x} cy={point.y} r={LEAF_R} fill={meta.stroke} fillOpacity="0.32" stroke={meta.stroke} strokeWidth="2" />
                   <text x={point.x} y={point.y + 4} textAnchor="middle" fill={meta.stroke} fontSize="9" fontWeight="600">{item.status}</text>
                   <title>{`${item.is_number} — ${item.title}`}</title>
                 </g>

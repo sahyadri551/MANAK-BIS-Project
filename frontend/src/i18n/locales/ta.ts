@@ -63,6 +63,7 @@ export const ta: Record<string, string> = {
   'results.error': 'பரிந்துரைகளைப் பெற முடியவில்லை. பின்தளம் இயங்குகிறதா?',
   'card.related': 'தொடர்புடையவை',
   'card.viewDetails': 'விவரம் காண்க',
+  'card.aiSummary': 'AI சுருக்கம்',
   'score.match': 'பொருத்தம்',
   'details.back': 'பரிந்துரைகளுக்குத் திரும்பு',
   'details.scope': 'நோக்கம்',

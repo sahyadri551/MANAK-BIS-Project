@@ -63,6 +63,7 @@ export const or: Record<string, string> = {
   'results.error': 'ସୁପାରିଶ ପାଇବାରେ ଅସମର୍ଥ। ବ୍ୟାକଏଣ୍ଡ ଚାଲୁଛି କି?',
   'card.related': 'ସମ୍ବନ୍ଧିତ',
   'card.viewDetails': 'ବିବରଣୀ ଦେଖନ୍ତୁ',
+  'card.aiSummary': 'AI ସାରାଂଶ',
   'score.match': 'ମେଳ',
   'details.back': 'ସୁପାରିଶକୁ ଫେରନ୍ତୁ',
   'details.scope': 'ପରିସର',

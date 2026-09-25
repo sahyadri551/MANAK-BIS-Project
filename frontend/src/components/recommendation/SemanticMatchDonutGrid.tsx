@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import type { RecommendationItem } from '../../types/recommendation'
 import { useI18n } from '../../i18n'
 import { pdfCopy } from '../../i18n/pdfCopy'
+import { useTheme } from '../../hooks/useTheme'
 
 type Props = {
   items: RecommendationItem[]
@@ -73,6 +74,14 @@ export function SemanticMatchDonutGrid({ items }: Props) {
   const navigate = useNavigate()
   const containerRef = useRef<HTMLDivElement>(null)
   const [columns, setColumns] = useState(1)
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  // The percentage/label text sits directly on the panel background (not
+  // inside a colored shape), so it needs a theme-aware color — a fixed dark
+  // navy disappears against a dark panel.
+  const scoreColor = isDark ? '#f1f5f9' : '#0f172a'
+  const labelColor = isDark ? '#94a3b8' : '#475569'
+  const trackColor = isDark ? '#26313f' : '#e5edfb'
 
   useEffect(() => {
     const el = containerRef.current
@@ -162,7 +171,7 @@ export function SemanticMatchDonutGrid({ items }: Props) {
                 }
               }}
             >
-              <circle cx={CELL / 2} cy={cy} r={RADIUS} fill="none" stroke="#e5edfb" strokeWidth={STROKE} />
+              <circle cx={CELL / 2} cy={cy} r={RADIUS} fill="none" stroke={trackColor} strokeWidth={STROKE} />
               <path
                 d={arcPath(CELL / 2, cy, RADIUS, 0, (entry.score / 100) * 360)}
                 fill="none"
@@ -170,10 +179,10 @@ export function SemanticMatchDonutGrid({ items }: Props) {
                 strokeWidth={STROKE}
                 strokeLinecap="round"
               />
-              <text x={CELL / 2} y={cy + 5} textAnchor="middle" fontSize="14" fontWeight="700" fill="#0f172a">
+              <text x={CELL / 2} y={cy + 5} textAnchor="middle" fontSize="14" fontWeight="700" fill={scoreColor}>
                 {entry.score}%
               </text>
-              <text x={CELL / 2} y={cy + RADIUS + 22} textAnchor="middle" fontSize="10" fill="#475569">
+              <text x={CELL / 2} y={cy + RADIUS + 22} textAnchor="middle" fontSize="10" fill={labelColor}>
                 {label}
               </text>
               <title>{`${entry.name} — ${entry.title}`}</title>
