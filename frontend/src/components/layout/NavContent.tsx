@@ -3,7 +3,7 @@ import { FileSearch, GitCompare, History, LayoutDashboard, LayoutGrid, Plus, Sea
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
 
-const MAIN = [
+export const MAIN = [
   { to: '/', key: 'nav.dashboard', icon: LayoutDashboard, testId: 'nav-dashboard-link', end: true },
   { to: '/recommendation', key: 'nav.newRec', icon: Plus, testId: 'nav-recommendation-link' },
   { to: '/pdf-analysis', key: 'nav.pdfAnalysis', icon: FileSearch, testId: 'nav-pdf-analysis-link' },
@@ -14,7 +14,7 @@ const MAIN = [
   { to: '/compare-standards', key: 'nav.comparison', icon: GitCompare, testId: 'nav-comparison-link' },
 ]
 
-const FOOT: typeof MAIN = []
+export const FOOT: typeof MAIN = []
 
 function item(collapsed: boolean, t: (k: string) => string, onNavigate?: () => void, testPrefix = '') {
   return ({ to, key, icon: Icon, testId, end }: (typeof MAIN)[number]) => (
