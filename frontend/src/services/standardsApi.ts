@@ -21,6 +21,8 @@ const standardsCache = new Map<string, CacheEntry<StandardSummary[]>>()
 const standardsRequests = new Map<string, Promise<StandardSummary[]>>()
 const historyCache = new Map<number, CacheEntry<SearchHistoryEntry[]>>()
 const historyRequests = new Map<number, Promise<SearchHistoryEntry[]>>()
+const browseCache = new Map<string, CacheEntry<BrowseResponse>>()
+const browseRequests = new Map<string, Promise<BrowseResponse>>()
 
 function standardsCacheKey(params: ListParams): string {
   return JSON.stringify({
@@ -160,12 +162,37 @@ export async function getFilterOptions(lang: string): Promise<FilterOptions> {
   return data
 }
 
-export async function getBrowseOptions(lang: string): Promise<BrowseResponse> {
-  const { data } = await api.get('/standards/meta/browse', { params: { lang } })
-  return data
+export async function getBrowseOptions(lang: string, options: { force?: boolean } = {}): Promise<BrowseResponse> {
+  const cached = browseCache.get(lang)
+  if (!options.force && cached) {
+    if (Date.now() - cached.fetchedAt < CACHE_TTL) return cached.data
+    void refreshBrowseOptions(lang)
+    return cached.data
+  }
+  return refreshBrowseOptions(lang)
 }
 
-export async function getSearchHistoryCount(hours?: number): Promise<number> {
-  const { data } = await api.get('/search/history/count', { params: hours ? { hours } : undefined })
+function refreshBrowseOptions(lang: string): Promise<BrowseResponse> {
+  const pending = browseRequests.get(lang)
+  if (pending) return pending
+  const request = api
+    .get('/standards/meta/browse', { params: { lang } })
+    .then(({ data }) => {
+      browseCache.set(lang, { data, fetchedAt: Date.now() })
+      return data as BrowseResponse
+    })
+    .finally(() => {
+      browseRequests.delete(lang)
+    })
+  browseRequests.set(lang, request)
+  return request
+}
+
+export function getCachedBrowseOptions(lang: string): BrowseResponse | null {
+  return browseCache.get(lang)?.data ?? null
+}
+
+export async function getSearchHistoryCount(): Promise<number> {
+  const { data } = await api.get('/search/history/count')
   return data.total as number
 }

@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { FileSearch, GitCompare, History, LayoutDashboard, LayoutGrid, Plus, Search, ShieldCheck } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
+import { getBrowseOptions, getSearchHistory } from '../../services/standardsApi'
 
 export const MAIN = [
   { to: '/', key: 'nav.dashboard', icon: LayoutDashboard, testId: 'nav-dashboard-link', end: true },
@@ -16,7 +17,14 @@ export const MAIN = [
 
 const FOOT: typeof MAIN = []
 
-function item(collapsed: boolean, t: (k: string) => string, onNavigate?: () => void, testPrefix = '') {
+// Warm the relevant cache just before navigation lands, so the page can render
+// from cache instead of showing a spinner. Cheap no-ops if already cached/in-flight.
+function prefetch(to: string, lang: string) {
+  if (to === '/browse') void getBrowseOptions(lang)
+  if (to === '/history') void getSearchHistory(100)
+}
+
+function item(collapsed: boolean, t: (k: string) => string, lang: string, onNavigate?: () => void, testPrefix = '') {
   return ({ to, key, icon: Icon, testId, end }: (typeof MAIN)[number]) => (
     <NavLink
       key={to}
@@ -25,6 +33,9 @@ function item(collapsed: boolean, t: (k: string) => string, onNavigate?: () => v
       title={collapsed ? t(key) : undefined}
       data-testid={`${testPrefix}${testId}`}
       onClick={onNavigate}
+      onMouseEnter={() => prefetch(to, lang)}
+      onFocus={() => prefetch(to, lang)}
+      onTouchStart={() => prefetch(to, lang)}
       className={({ isActive }) =>
         cn(
           'group relative flex items-center gap-3 rounded-md border text-sm transition-colors',
@@ -56,8 +67,8 @@ export function NavContent({
   onNavigate?: () => void
   testPrefix?: string
 }) {
-  const { t } = useI18n()
-  const render = item(collapsed, t, onNavigate, testPrefix)
+  const { t, lang } = useI18n()
+  const render = item(collapsed, t, lang, onNavigate, testPrefix)
   return (
     <div className="flex h-full flex-1 flex-col">
       <div className={cn('flex items-center gap-3 px-2', collapsed && 'justify-center px-0')}>

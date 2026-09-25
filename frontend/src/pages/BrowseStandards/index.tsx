@@ -3,7 +3,7 @@ import { ArrowRight, Layers3, Landmark, ListFilter, Network } from 'lucide-react
 import { Link } from 'react-router-dom'
 
 import { Loader } from '../../components/common/Loader'
-import { getBrowseOptions } from '../../services/standardsApi'
+import { getBrowseOptions, getCachedBrowseOptions } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import { labelFor } from '../../i18n/dataLabels'
 import { DIMENSION_COLORS } from '../../utils/constants'
@@ -23,12 +23,19 @@ const KIND = { department: 'departments', aspect: 'aspects', group: 'groups', mi
 
 export default function BrowseStandards() {
   const { t, lang } = useI18n()
-  const [data, setData] = useState<Record<string, Item[]>>({})
-  const [loading, setLoading] = useState(true)
+  const cachedData = getCachedBrowseOptions(lang)
+  const [data, setData] = useState<Record<string, Item[]>>(cachedData ?? {})
+  const [loading, setLoading] = useState(!cachedData)
 
   useEffect(() => {
     let active = true
-    setLoading(true)
+    const cached = getCachedBrowseOptions(lang)
+    if (cached) {
+      setData(cached)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
     getBrowseOptions(lang)
       .then((value) => active && setData(value))
       .finally(() => active && setLoading(false))
