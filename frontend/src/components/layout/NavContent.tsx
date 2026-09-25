@@ -3,7 +3,7 @@ import { FileSearch, GitCompare, History, LayoutDashboard, LayoutGrid, Plus, Sea
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
 
-const MAIN = [
+export const MAIN = [
   { to: '/', key: 'nav.dashboard', icon: LayoutDashboard, testId: 'nav-dashboard-link', end: true },
   { to: '/recommendation', key: 'nav.newRec', icon: Plus, testId: 'nav-recommendation-link' },
   { to: '/pdf-analysis', key: 'nav.pdfAnalysis', icon: FileSearch, testId: 'nav-pdf-analysis-link' },
