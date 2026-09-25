@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bot, Loader2, MessageCircle, Send, X } from 'lucide-react'
+import { Bot, Loader2, Send, X } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
 import { sendChatMessage } from '../../services/chatApi'
@@ -21,9 +21,13 @@ const WELCOME: DisplayMessage = {
 
 const MAX_HISTORY_SENT = 8
 
+const CHATBOT_ICON_URL =
+  'https://huggingface.co/spaces/AvocadoMuffin/Gemma_Chatbot/resolve/main/ai_bot.png?download=true'
+
 export function FloatingChatbot() {
   const { lang } = useI18n()
   const [open, setOpen] = useState(false)
+  const [logoFailed, setLogoFailed] = useState(false)
   const [messages, setMessages] = useState<DisplayMessage[]>([WELCOME])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -94,12 +98,27 @@ export function FloatingChatbot() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Close chat' : 'Open standards Q&A chat'}
         className={cn(
-          'fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full',
-          'bg-accent text-white shadow-glow transition-transform hover:scale-105 hover:bg-accent-hover',
-          'active:scale-95',
+          'fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full p-[3px]',
+          'bg-gradient-to-br from-sky-400 to-indigo-600 shadow-glow ring-1 ring-white/40',
+          'transition-transform hover:scale-105 active:scale-95',
         )}
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {open ? (
+          <X className="h-6 w-6 text-white" />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white">
+            {logoFailed ? (
+              <Bot className="h-7 w-7 text-accent" />
+            ) : (
+              <img
+                src={CHATBOT_ICON_URL}
+                alt="Open standards Q&A chat"
+                className="h-full w-full object-cover"
+                onError={() => setLogoFailed(true)}
+              />
+            )}
+          </span>
+        )}
       </button>
 
       {/* Panel */}

@@ -7,25 +7,25 @@
 :root,
 html.dark {
   color-scheme: dark;
-  /* Warm charcoal ledger tones, not blue-black. */
-  --c-base: 18 17 15;
-  --c-surface: 28 25 22;
-  --c-surface-2: 38 34 29;
-  --c-hairline: 56 50 43;
-  --grid-line: rgba(255, 255, 255, 0.02);
-  --glow-a: rgba(190, 138, 52, 0.07);
-  --glow-b: rgba(92, 135, 104, 0.05);
+  /* Cool blue-slate tones for a calm, professional dark theme. */
+  --c-base: 8 12 20;
+  --c-surface: 15 21 33;
+  --c-surface-2: 22 30 46;
+  --c-hairline: 42 54 78;
+  --grid-line: rgba(147, 197, 253, 0.04);
+  --glow-a: rgba(59, 130, 246, 0.1);
+  --glow-b: rgba(99, 102, 241, 0.08);
 }
 
 html.light {
   color-scheme: light;
-  --c-base: 247 244 238;
-  --c-surface: 255 253 250;
-  --c-surface-2: 240 235 227;
-  --c-hairline: 224 216 202;
-  --grid-line: rgba(35, 30, 20, 0.035);
-  --glow-a: rgba(190, 138, 52, 0.08);
-  --glow-b: rgba(92, 135, 104, 0.07);
+  --c-base: 238 242 250;
+  --c-surface: 255 255 255;
+  --c-surface-2: 224 231 244;
+  --c-hairline: 199 211 233;
+  --grid-line: rgba(30, 58, 95, 0.035);
+  --glow-a: rgba(59, 130, 246, 0.08);
+  --glow-b: rgba(99, 102, 241, 0.06);
 }
 
 /* Safety net so the page background always tracks the theme even if a
@@ -52,7 +52,7 @@ body {
 }
 
 ::selection {
-  background: rgba(190, 138, 52, 0.3);
+  background: rgba(59, 130, 246, 0.3);
   color: rgb(var(--c-base));
 }
 
@@ -62,34 +62,32 @@ body {
   border-color: rgb(var(--c-hairline)) !important;
 }
 
-/* Replace the browser's default blue focus ring with the app's gold
-   accent, so cards/sections don't flash a stock blue outline. */
+/* Focus ring uses the app's blue accent. */
 :focus-visible {
-  outline: 2px solid rgb(190 138 52 / 0.6);
+  outline: 2px solid rgb(59 130 246 / 0.6);
   outline-offset: 2px;
 }
 
-/* Remap the cool blue-gray slate scale to warm stone inks so text sits with
-   the charcoal/gold ledger palette instead of reading as a generic dark UI. */
-html.dark .text-slate-100 { color: #F2EEE7; }
-html.dark .text-slate-200 { color: #DDD6C9; }
-html.dark .text-slate-300 { color: #B7AE9D; }
-html.dark .text-slate-400 { color: #948A78; }
-html.dark .text-slate-500 { color: #756C5D; }
-html.dark .text-slate-600 { color: #5C544A; }
-html.dark .border-slate-700 { border-color: #453F37; }
-html.dark .bg-slate-800 { background-color: #26221D; }
+/* Remap the default slate scale to a slightly cooler blue-slate tint so
+   text sits with the blue panel palette instead of reading as neutral gray. */
+html.dark .text-slate-100 { color: #E8EEF7; }
+html.dark .text-slate-200 { color: #C7D2E3; }
+html.dark .text-slate-300 { color: #9FADC4; }
+html.dark .text-slate-400 { color: #7C8AA6; }
+html.dark .text-slate-500 { color: #5E6C87; }
+html.dark .text-slate-600 { color: #47536A; }
+html.dark .border-slate-700 { border-color: #2A364E; }
+html.dark .bg-slate-800 { background-color: #182236; }
 
-html.light .text-slate-100 { color: #23201A; }
-html.light .text-slate-200 { color: #332E26; }
-html.light .text-slate-300 { color: #4A4438; }
-html.light .text-slate-400 { color: #6B6455; }
-html.light .text-slate-500 { color: #8B8272; }
-html.light .text-slate-600 { color: #A69C8A; }
-html.light .text-slate-800 { color: #D8D0C0; }
-html.light .border-slate-700 { border-color: #E4DCCC; }
-html.light .bg-slate-800 { background-color: #E4DCCC; }
-html.light .text-blue-200 { color: #8A5F1F; }
+html.light .text-slate-100 { color: #101826; }
+html.light .text-slate-200 { color: #1E2A3F; }
+html.light .text-slate-300 { color: #33425C; }
+html.light .text-slate-400 { color: #55637E; }
+html.light .text-slate-500 { color: #7B879E; }
+html.light .text-slate-600 { color: #9FAAC0; }
+html.light .text-slate-800 { color: #D6DEEC; }
+html.light .border-slate-700 { border-color: #DCE4F2; }
+html.light .bg-slate-800 { background-color: #DCE4F2; }
 
 ::-webkit-scrollbar {
   width: 10px;

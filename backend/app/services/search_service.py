@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
@@ -28,3 +30,8 @@ class SearchService:
 
     def count(self) -> int:
         return self.db.execute(select(func.count(SearchHistory.id))).scalar_one()
+
+    def count_since(self, hours: int = 24) -> int:
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        stmt = select(func.count(SearchHistory.id)).where(SearchHistory.created_at >= cutoff)
+        return self.db.execute(stmt).scalar_one()

@@ -20,7 +20,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(!cachedStats)
 
   useEffect(() => {
-    Promise.all([getStats(lang), getSearchHistory(10), getSearchHistoryCount().catch(() => null)])
+    Promise.all([getStats(lang), getSearchHistory(10), getSearchHistoryCount(24).catch(() => null)])
       .then(([nextStats, nextHistory, total]) => {
         setStats(nextStats)
         setHistory(nextHistory)

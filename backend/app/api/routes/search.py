@@ -14,5 +14,8 @@ def history(limit: int = Query(50, le=200), db: Session = Depends(get_db)):
 
 
 @router.get("/history/count")
-def history_count(db: Session = Depends(get_db)):
-    return {"total": SearchService(db).count()}
+def history_count(hours: int | None = Query(None, gt=0), db: Session = Depends(get_db)):
+    service = SearchService(db)
+    if hours is not None:
+        return {"total": service.count_since(hours=hours)}
+    return {"total": service.count()}
