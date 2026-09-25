@@ -192,7 +192,9 @@ export function getCachedBrowseOptions(lang: string): BrowseResponse | null {
   return browseCache.get(lang)?.data ?? null
 }
 
-export async function getSearchHistoryCount(): Promise<number> {
-  const { data } = await api.get('/search/history/count')
+export async function getSearchHistoryCount(hours?: number): Promise<number> {
+  const { data } = await api.get('/search/history/count', {
+    params: hours ? { hours } : undefined,
+  })
   return data.total as number
 }

@@ -14,7 +14,7 @@ export const MAIN = [
   { to: '/compare-standards', key: 'nav.comparison', icon: GitCompare, testId: 'nav-comparison-link' },
 ]
 
-const FOOT: typeof MAIN = []
+export const FOOT: typeof MAIN = []
 
 function item(collapsed: boolean, t: (k: string) => string, onNavigate?: () => void, testPrefix = '') {
   return ({ to, key, icon: Icon, testId, end }: (typeof MAIN)[number]) => (
