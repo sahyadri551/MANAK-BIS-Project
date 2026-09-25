@@ -2,9 +2,8 @@ import { NavLink } from 'react-router-dom'
 import { FileSearch, GitCompare, History, LayoutDashboard, LayoutGrid, Plus, Search, ShieldCheck } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
-import { getBrowseOptions, getSearchHistory } from '../../services/standardsApi'
 
-export const MAIN = [
+const MAIN = [
   { to: '/', key: 'nav.dashboard', icon: LayoutDashboard, testId: 'nav-dashboard-link', end: true },
   { to: '/recommendation', key: 'nav.newRec', icon: Plus, testId: 'nav-recommendation-link' },
   { to: '/pdf-analysis', key: 'nav.pdfAnalysis', icon: FileSearch, testId: 'nav-pdf-analysis-link' },
@@ -17,14 +16,7 @@ export const MAIN = [
 
 const FOOT: typeof MAIN = []
 
-// Warm the relevant cache just before navigation lands, so the page can render
-// from cache instead of showing a spinner. Cheap no-ops if already cached/in-flight.
-function prefetch(to: string, lang: string) {
-  if (to === '/browse') void getBrowseOptions(lang)
-  if (to === '/history') void getSearchHistory(100)
-}
-
-function item(collapsed: boolean, t: (k: string) => string, lang: string, onNavigate?: () => void, testPrefix = '') {
+function item(collapsed: boolean, t: (k: string) => string, onNavigate?: () => void, testPrefix = '') {
   return ({ to, key, icon: Icon, testId, end }: (typeof MAIN)[number]) => (
     <NavLink
       key={to}
@@ -33,18 +25,15 @@ function item(collapsed: boolean, t: (k: string) => string, lang: string, onNavi
       title={collapsed ? t(key) : undefined}
       data-testid={`${testPrefix}${testId}`}
       onClick={onNavigate}
-      onMouseEnter={() => prefetch(to, lang)}
-      onFocus={() => prefetch(to, lang)}
-      onTouchStart={() => prefetch(to, lang)}
       className={({ isActive }) =>
         cn(
-          'group relative flex items-center gap-3 rounded-md border text-sm transition-colors',
+          'group relative flex items-center gap-3 border-l-2 text-sm transition-colors',
           collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5',
           isActive
-            ? 'border-accent/30 bg-accent/[0.06] font-medium text-accent'
+            ? 'border-l-accent bg-accent/[0.06] font-medium text-accent'
             : collapsed
-              ? 'border-transparent text-slate-500 hover:text-slate-200'
-              : 'border-transparent text-slate-500 hover:bg-surface-2/70 hover:text-slate-200',
+              ? 'border-l-transparent text-slate-500 hover:text-slate-200'
+              : 'border-l-transparent text-slate-500 hover:bg-surface-2/70 hover:text-slate-200',
         )
       }
     >
@@ -67,13 +56,13 @@ export function NavContent({
   onNavigate?: () => void
   testPrefix?: string
 }) {
-  const { t, lang } = useI18n()
-  const render = item(collapsed, t, lang, onNavigate, testPrefix)
+  const { t } = useI18n()
+  const render = item(collapsed, t, onNavigate, testPrefix)
   return (
     <div className="flex h-full flex-1 flex-col">
       <div className={cn('flex items-center gap-3 px-2', collapsed && 'justify-center px-0')}>
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-accent/30 bg-accent/10">
-          <span className="font-display text-lg font-semibold text-accent">BIS</span>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-accent/30 bg-accent/10">
+          <img src="/logo.png" alt="MANAK" className="h-full w-full object-cover" />
         </div>
         {!collapsed && (
           <div className="leading-tight">
