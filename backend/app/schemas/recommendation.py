@@ -91,9 +91,18 @@ class PdfAnalysisSummary(BaseModel):
     extraction_warnings: list[str] = Field(default_factory=list)
 
 
+class PdfLineItem(BaseModel):
+    """One detected requirement/line item from a tender PDF, with its own
+    top standard recommendations (separate from the whole-document match)."""
+    item_number: int
+    text: str
+    recommendations: list[RecommendationItem] = Field(default_factory=list)
+
+
 class RecommendResponse(BaseModel):
     request_id: str
     query: str
     recommendations: list[RecommendationItem]
     similarity_map: list[SimilarityMapPoint] = Field(default_factory=list)
     pdf_analysis: PdfAnalysisSummary | None = None
+    line_items: list[PdfLineItem] = Field(default_factory=list)

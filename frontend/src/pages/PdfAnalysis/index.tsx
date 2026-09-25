@@ -4,13 +4,14 @@ import { toast } from 'sonner'
 import { PdfUploadZone } from '../../components/recommendation/PdfUploadZone'
 import { FilterPanel } from '../../components/recommendation/FilterPanel'
 import { ResultsList } from '../../components/recommendation/ResultsList'
+import { LineItemRecommendations } from '../../components/recommendation/LineItemRecommendations'
 import { SemanticMatchDonutGrid } from '../../components/recommendation/SemanticMatchDonutGrid'
 import { SimilarityMap } from '../../components/recommendation/SimilarityMap'
 import { Loader } from '../../components/common/Loader'
-import { analyzePdf } from '../../services/pdfApi'
+import { analyzePdfStream } from '../../services/pdfApi'
 import { invalidateSearchHistory } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
-import type { PdfAnalysisSummary, RecommendationFilters, RecommendationItem, SimilarityMapPoint } from '../../types/recommendation'
+import type { PdfAnalysisSummary, PdfLineItem, RecommendationFilters, RecommendationItem, SimilarityMapPoint } from '../../types/recommendation'
 
 const NO_FILTERS: RecommendationFilters = { status: null, department: null, aspect: null }
 const PDF_STATE_KEY = 'manak-bis-pdf-analysis-state'
@@ -20,6 +21,7 @@ type PdfState = {
   summary: PdfAnalysisSummary | null
   results: RecommendationItem[]
   similarityMap: SimilarityMapPoint[]
+  lineItems: PdfLineItem[]
 }
 
 import { pdfCopy } from '../../i18n/pdfCopy'
@@ -92,7 +94,10 @@ export default function PdfAnalysis() {
   const [summary, setSummary] = useState<PdfAnalysisSummary | null>(null)
   const [results, setResults] = useState<RecommendationItem[]>([])
   const [similarityMap, setSimilarityMap] = useState<SimilarityMapPoint[]>([])
+  const [lineItems, setLineItems] = useState<PdfLineItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [matching, setMatching] = useState(false)
+  const [lineItemProgress, setLineItemProgress] = useState<{ completed: number; total: number } | null>(null)
 
   useEffect(() => {
     try {
@@ -103,6 +108,7 @@ export default function PdfAnalysis() {
       setSummary(saved.summary || null)
       setResults(saved.results || [])
       setSimilarityMap(saved.similarityMap || [])
+      setLineItems(saved.lineItems || [])
     } catch {
       sessionStorage.removeItem(PDF_STATE_KEY)
     }
@@ -111,22 +117,55 @@ export default function PdfAnalysis() {
   async function runAnalysis() {
     if (!file) return
     setLoading(true)
+    setMatching(false)
+    setLineItemProgress(null)
     setSummary(null)
     setResults([])
     setSimilarityMap([])
+    setLineItems([])
+
+    let latestSummary: PdfAnalysisSummary | null = null
+    let latestResults: RecommendationItem[] = []
+    let latestSimilarityMap: SimilarityMapPoint[] = []
+    let latestLineItems: PdfLineItem[] = []
+
     try {
-      const response = await analyzePdf(file, filters, lang)
-      setSummary(response.pdf_analysis ?? null)
-      setResults(response.recommendations ?? [])
-      setSimilarityMap(response.similarity_map ?? [])
-      try { sessionStorage.setItem(PDF_STATE_KEY, JSON.stringify({ filters, summary: response.pdf_analysis ?? null, results: response.recommendations ?? [], similarityMap: response.similarity_map ?? [] })) } catch {}
-      invalidateSearchHistory()
-      toast.success(`${response.recommendations.length} ${pdfCopy(lang, 'standardsMatched')}`)
+      await analyzePdfStream(file, filters, lang, (event) => {
+        if (event.stage === 'summary') {
+          latestSummary = event.data
+          setSummary(event.data)
+          setLoading(false) // fast stats are in; keep showing progress for the slower ML matching below
+          setMatching(true)
+        } else if (event.stage === 'recommendations') {
+          latestResults = event.data.recommendations
+          latestSimilarityMap = event.data.similarity_map
+          setResults(latestResults)
+          setSimilarityMap(latestSimilarityMap)
+        } else if (event.stage === 'line_item') {
+          latestLineItems = [...latestLineItems, event.data]
+          setLineItems(latestLineItems)
+          setLineItemProgress(event.progress)
+        } else if (event.stage === 'done') {
+          setMatching(false)
+          setLineItemProgress(null)
+          try {
+            sessionStorage.setItem(
+              PDF_STATE_KEY,
+              JSON.stringify({ filters, summary: latestSummary, results: latestResults, similarityMap: latestSimilarityMap, lineItems: latestLineItems }),
+            )
+          } catch {}
+          invalidateSearchHistory()
+          toast.success(`${latestResults.length} ${pdfCopy(lang, 'standardsMatched')}`)
+        } else if (event.stage === 'error') {
+          throw new Error(event.message)
+        }
+      })
     } catch (error) {
       console.error(error)
       toast.error(pdfCopy(lang, 'pdfFailed'))
     } finally {
       setLoading(false)
+      setMatching(false)
     }
   }
 
@@ -136,7 +175,52 @@ export default function PdfAnalysis() {
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <div className="space-y-5"><div className="panel space-y-4 p-5"><div><h2 className="font-display text-sm font-semibold text-slate-200">{pdfCopy(lang, "source")}</h2><p className="mt-1 text-xs text-slate-600">{pdfCopy(lang, "sourceHint")}</p></div><PdfUploadZone file={file} onFileChange={setFile} onAnalyze={runAnalysis} analyzing={loading} /><FilterPanel value={filters} onChange={setFilters} /></div></div>
         <div className="min-w-0 space-y-5">
-          {loading ? <Loader label={t('form.matching')} /> : summary ? <><AnalysisSummary summary={summary} lang={lang} />{results.length > 0 && <SemanticMatchDonutGrid items={results} />}<div className="panel p-5"><div className="flex items-center justify-between gap-3"><div><h2 className="font-display text-lg font-semibold text-slate-100">{pdfCopy(lang, "recommended")}</h2><p className="mt-1 text-xs text-slate-500">{pdfCopy(lang, "recommendedDesc")}</p></div><span className="rounded-full border border-accent/20 bg-accent/5 px-2.5 py-1 font-mono text-xs text-accent">{results.length} {pdfCopy(lang, "matches")}</span></div><div className="mt-4"><ResultsList items={results} selectedIds={new Set()} onToggleCompare={() => undefined} returnTo="/pdf-analysis" /></div></div><SimilarityMap points={similarityMap} /></> : <div className="panel flex min-h-[420px] flex-col items-center justify-center p-8 text-center"><FileSearch className="h-10 w-10 text-accent/60" /><h2 className="mt-4 font-display text-xl font-semibold text-slate-200">{pdfCopy(lang, "ready")}</h2><p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{pdfCopy(lang, "readyDesc")}</p></div>}
+          {loading && !summary ? (
+            <Loader label={t('form.matching')} />
+          ) : summary ? (
+            <>
+              <AnalysisSummary summary={summary} lang={lang} />
+              {matching && (
+                <div className="panel flex items-center gap-3 p-4 text-sm text-slate-400">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+                  {lineItemProgress
+                    ? `${pdfCopy(lang, 'matchingLineItems')} ${lineItemProgress.completed}/${lineItemProgress.total}…`
+                    : `${pdfCopy(lang, 'matchingStandards')}…`}
+                </div>
+              )}
+              {lineItems.length > 0 && (
+                <LineItemRecommendations
+                  items={lineItems}
+                  title={pdfCopy(lang, 'lineItemsTitle')}
+                  description={pdfCopy(lang, 'lineItemsDesc')}
+                  itemLabel={pdfCopy(lang, 'matches')}
+                  noMatchesLabel={pdfCopy(lang, 'lineItemsNoMatch')}
+                />
+              )}
+              {results.length > 0 && <SemanticMatchDonutGrid items={results} />}
+              <div className="panel p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-lg font-semibold text-slate-100">{pdfCopy(lang, 'recommended')}</h2>
+                    <p className="mt-1 text-xs text-slate-500">{pdfCopy(lang, 'recommendedDesc')}</p>
+                  </div>
+                  <span className="rounded-full border border-accent/20 bg-accent/5 px-2.5 py-1 font-mono text-xs text-accent">
+                    {results.length} {pdfCopy(lang, 'matches')}
+                  </span>
+                </div>
+                <div className="mt-4">
+                  <ResultsList items={results} selectedIds={new Set()} onToggleCompare={() => undefined} returnTo="/pdf-analysis" />
+                </div>
+              </div>
+              <SimilarityMap points={similarityMap} />
+            </>
+          ) : (
+            <div className="panel flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
+              <FileSearch className="h-10 w-10 text-accent/60" />
+              <h2 className="mt-4 font-display text-xl font-semibold text-slate-200">{pdfCopy(lang, 'ready')}</h2>
+              <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{pdfCopy(lang, 'readyDesc')}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

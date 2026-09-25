@@ -85,7 +85,13 @@ class RecommendationService:
         self.provider = provider
         self.search_service = SearchService(db)
 
-    def recommend(self, request: RecommendRequest, lang: str = "en") -> RecommendResponse:
+    def recommend(self, request: RecommendRequest, lang: str = "en", record: bool = True) -> RecommendResponse:
+        """
+        record=False skips writing to the Recommendation table and search
+        history — used for per-line-item sub-queries generated from a PDF
+        so they don't flood search history with 20+ synthetic entries per
+        upload. The user-facing whole-document query is still recorded.
+        """
         request_id = uuid.uuid4().hex
         candidates = self.repo.list(status=request.filters.status, department=request.filters.department, aspect=request.filters.aspect)
         ranked = self.provider.recommend(request, self.db, candidates)
@@ -119,19 +125,21 @@ class RecommendationService:
                     allied_standards=allied,
                 )
             )
-            self.db.add(
-                Recommendation(
-                    request_id=request_id,
-                    standard_id=std.id,
-                    query=request.query,
-                    score=score,
-                    matched_requirements=matched,
-                    reason=reason,
-                    rank=rank,
+            if record:
+                self.db.add(
+                    Recommendation(
+                        request_id=request_id,
+                        standard_id=std.id,
+                        query=request.query,
+                        score=score,
+                        matched_requirements=matched,
+                        reason=reason,
+                        rank=rank,
+                    )
                 )
-            )
 
-        self.db.commit()
-        self.search_service.record(request_id, request, len(items))
+        if record:
+            self.db.commit()
+            self.search_service.record(request_id, request, len(items))
         similarity_map = getattr(self.provider, "last_similarity_map", [])
         return RecommendResponse(request_id=request_id, query=request.query, recommendations=items, similarity_map=similarity_map)

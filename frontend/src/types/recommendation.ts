@@ -57,12 +57,19 @@ export interface PdfAnalysisSummary {
   extraction_warnings: string[]
 }
 
+export interface PdfLineItem {
+  item_number: number
+  text: string
+  recommendations: RecommendationItem[]
+}
+
 export interface RecommendResponse {
   request_id: string
   query: string
   recommendations: RecommendationItem[]
   similarity_map: SimilarityMapPoint[]
   pdf_analysis?: PdfAnalysisSummary | null
+  line_items?: PdfLineItem[]
 }
 
 export interface SummaryRequestItem {
