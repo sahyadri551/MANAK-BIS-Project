@@ -43,6 +43,18 @@ body,
   height: 100%;
 }
 
+/* Smooth, non-jarring theme switch instead of an instant color snap. */
+body,
+.panel,
+.field,
+header,
+aside {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
 body {
   @apply bg-base text-slate-300 font-sans antialiased;
   background-image:

@@ -4,7 +4,7 @@ import { StatCard } from '../../components/dashboard/StatCard'
 import { DomainCoverageChart } from '../../components/dashboard/DomainCoverageChart'
 import { RecentSearches } from '../../components/dashboard/RecentSearches'
 import { QuickSpec } from '../../components/dashboard/QuickSpec'
-import { Loader } from '../../components/common/Loader'
+import { DashboardSkeleton } from '../../components/common/Skeleton'
 import { getCachedSearchHistory, getCachedStats, getSearchHistory, getSearchHistoryCount, getStats } from '../../services/standardsApi'
 import { useI18n } from '../../i18n'
 import type { StatsOverview } from '../../types/standard'
@@ -29,7 +29,7 @@ export default function Dashboard() {
       .finally(() => setLoading(false))
   }, [lang])
 
-  if (loading || !stats) return <Loader />
+  if (loading || !stats) return <DashboardSkeleton />
 
   const activeCount = stats.by_status['Active'] ?? 0
   const aspectCount = Object.keys(stats.by_aspect).length
