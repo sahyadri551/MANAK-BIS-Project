@@ -29,7 +29,7 @@ export function AppLayout() {
           </div>
         </main>
         <footer className="border-t border-hairline px-4 py-3 text-center text-[11px] text-slate-500 md:px-8">
-          Built for Smart India Hackathon · Bureau of Indian Standards
+          © {new Date().getFullYear()} . Bureau of Indian Standards
         </footer>
       </div>
       <FloatingChatbot />
