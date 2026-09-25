@@ -3,7 +3,7 @@ import { FileSearch, GitCompare, History, LayoutDashboard, LayoutGrid, Plus, Sea
 import { cn } from '../../utils/cn'
 import { useI18n } from '../../i18n'
 
-export const MAIN = [
+const MAIN = [
   { to: '/', key: 'nav.dashboard', icon: LayoutDashboard, testId: 'nav-dashboard-link', end: true },
   { to: '/recommendation', key: 'nav.newRec', icon: Plus, testId: 'nav-recommendation-link' },
   { to: '/pdf-analysis', key: 'nav.pdfAnalysis', icon: FileSearch, testId: 'nav-pdf-analysis-link' },
@@ -27,13 +27,13 @@ function item(collapsed: boolean, t: (k: string) => string, onNavigate?: () => v
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          'group relative flex items-center gap-3 border-l-2 text-sm transition-colors',
+          'group relative flex items-center gap-3 rounded-md border text-sm transition-colors',
           collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5',
           isActive
-            ? 'border-l-accent bg-accent/[0.06] font-medium text-accent'
+            ? 'border-accent/30 bg-accent/[0.06] font-medium text-accent'
             : collapsed
-              ? 'border-l-transparent text-slate-500 hover:text-slate-200'
-              : 'border-l-transparent text-slate-500 hover:bg-surface-2/70 hover:text-slate-200',
+              ? 'border-transparent text-slate-500 hover:text-slate-200'
+              : 'border-transparent text-slate-500 hover:bg-surface-2/70 hover:text-slate-200',
         )
       }
     >
